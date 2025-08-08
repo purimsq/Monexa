@@ -99,8 +99,18 @@ const AddButton = styled(motion.button)`
 
 const ClientsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+  
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+  }
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
 `;
 
 const ClientCard = styled(motion.div)`
@@ -263,6 +273,78 @@ const clients = [
     lastPurchase: 'Dec 01, 2024',
     avatar: '🎹'
   },
+  {
+    id: 7,
+    name: 'Beatmaker PQR',
+    email: 'beatmaker.pqr@email.com',
+    beatsPurchased: 3,
+    totalSpent: '$450',
+    lastPurchase: 'Nov 28, 2024',
+    avatar: '🎛️'
+  },
+  {
+    id: 8,
+    name: 'Vocalist STU',
+    email: 'vocalist.stu@email.com',
+    beatsPurchased: 2,
+    totalSpent: '$320',
+    lastPurchase: 'Nov 25, 2024',
+    avatar: '🎙️'
+  },
+  {
+    id: 9,
+    name: 'DJ VWX',
+    email: 'dj.vwx@email.com',
+    beatsPurchased: 4,
+    totalSpent: '$680',
+    lastPurchase: 'Nov 22, 2024',
+    avatar: '💿'
+  },
+  {
+    id: 10,
+    name: 'Composer YZ',
+    email: 'composer.yz@email.com',
+    beatsPurchased: 1,
+    totalSpent: '$180',
+    lastPurchase: 'Nov 20, 2024',
+    avatar: '🎼'
+  },
+  {
+    id: 11,
+    name: 'Musician AA',
+    email: 'musician.aa@email.com',
+    beatsPurchased: 5,
+    totalSpent: '$820',
+    lastPurchase: 'Nov 18, 2024',
+    avatar: '🎸'
+  },
+  {
+    id: 12,
+    name: 'Producer BB',
+    email: 'producer.bb@email.com',
+    beatsPurchased: 3,
+    totalSpent: '$540',
+    lastPurchase: 'Nov 15, 2024',
+    avatar: '🎚️'
+  },
+  {
+    id: 13,
+    name: 'Sound Engineer CC',
+    email: 'engineer.cc@email.com',
+    beatsPurchased: 2,
+    totalSpent: '$380',
+    lastPurchase: 'Nov 12, 2024',
+    avatar: '🎛️'
+  },
+  {
+    id: 14,
+    name: 'Studio Manager DD',
+    email: 'manager.dd@email.com',
+    beatsPurchased: 4,
+    totalSpent: '$720',
+    lastPurchase: 'Nov 10, 2024',
+    avatar: '🎧'
+  }
 ];
 
 const Beneficiaries = () => {

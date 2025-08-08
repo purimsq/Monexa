@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { Search, Bell, Settings, ChevronDown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const TopBarContainer = styled.div`
   background: #ffffff;
@@ -150,6 +151,8 @@ const UserRole = styled.span`
 `;
 
 function TopBar() {
+  const navigate = useNavigate();
+  
   return (
     <TopBarContainer>
                    <LeftSection>
@@ -163,6 +166,7 @@ function TopBar() {
 
       <RightSection>
         <IconButton
+          onClick={() => navigate('/notifications')}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -171,6 +175,7 @@ function TopBar() {
         </IconButton>
 
         <IconButton
+          onClick={() => navigate('/settings')}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >

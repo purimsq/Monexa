@@ -13,6 +13,8 @@ import MyAccount from './pages/MyAccount';
 import PaymentHistory from './pages/PaymentHistory';
 import TransactionHistory from './pages/TransactionHistory';
 import Cards from './pages/Cards';
+import Notifications from './pages/Notifications';
+import Settings from './pages/Settings';
 import Beneficiaries from './pages/Beneficiaries';
 import Documents from './pages/Documents';
 import Applications from './pages/Applications';
@@ -71,8 +73,10 @@ function AppContent() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/my-account" element={<MyAccount />} />
           <Route path="/payment-history" element={<PaymentHistory />} />
-          <Route path="/transaction-history" element={<TransactionHistory />} />
-        <Route path="/cards" element={<Cards />} />
+                    <Route path="/transaction-history" element={<TransactionHistory />} />
+          <Route path="/cards" element={<Cards />} />
+          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/beneficiaries" element={<Beneficiaries />} />
           <Route path="/documents" element={<Documents />} />
           <Route path="/applications" element={<Applications />} />
