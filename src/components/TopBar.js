@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { Search, Bell, Settings, ChevronDown } from 'lucide-react';
+import { Search, Bell, Settings, ChevronDown, LogOut, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'react-toastify';
 
 const TopBarContainer = styled.div`
   background: #ffffff;
@@ -114,10 +116,70 @@ const UserInfo = styled.div`
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
+  position: relative;
 
   &:hover {
     background: #f1f5f9;
   }
+`;
+
+const UserDropdown = styled(motion.div)`
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e2e8f0;
+  padding: 8px;
+  min-width: 200px;
+  z-index: 1000;
+`;
+
+const DropdownItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e293b;
+
+  &:hover {
+    background: #f1f5f9;
+    color: #1a1a1a;
+  }
+
+  &.danger {
+    color: #ef4444;
+    
+    &:hover {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+  }
+`;
+
+const UserHeader = styled.div`
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 8px;
+`;
+
+const UserHeaderName = styled.div`
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 14px;
+  margin-bottom: 2px;
+`;
+
+const UserHeaderEmail = styled.div`
+  font-size: 12px;
+  color: #64748b;
 `;
 
 const Avatar = styled.div`
@@ -152,15 +214,51 @@ const UserRole = styled.span`
 
 function TopBar() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowUserDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    setShowUserDropdown(false);
+    toast.success('Logged out successfully', {
+      position: "bottom-right",
+      autoClose: 2000,
+    });
+  };
+
+  const handleProfileClick = () => {
+    navigate('/profile');
+    setShowUserDropdown(false);
+  };
+
+  const handleSettingsClick = () => {
+    navigate('/settings');
+    setShowUserDropdown(false);
+  };
   
   return (
     <TopBarContainer>
-                   <LeftSection>
-               <AppName>Monexa</AppName>
-               <AppSubtitle>Russell's Music Studio</AppSubtitle>
-               <SearchContainer>
+      <LeftSection>
+        <AppName>Monexa</AppName>
+        <AppSubtitle>{user?.name || 'User'}'s Music Studio</AppSubtitle>
+        <SearchContainer>
           <SearchIcon />
-                           <SearchInput placeholder="Search beats, clients, sales..." />
+          <SearchInput placeholder="Search beats, clients, sales..." />
         </SearchContainer>
       </LeftSection>
 
@@ -182,13 +280,41 @@ function TopBar() {
           <Settings size={20} />
         </IconButton>
 
-        <UserInfo>
-                         <Avatar>RM</Avatar>
-                           <UserDetails>
-                   <UserName>Russell Mwaura</UserName>
-                   <UserRole>Music Producer</UserRole>
-                 </UserDetails>
+        <UserInfo ref={dropdownRef} onClick={() => setShowUserDropdown(!showUserDropdown)}>
+          <Avatar>{user?.avatar || user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}</Avatar>
+          <UserDetails>
+            <UserName>{user?.name || 'User'}</UserName>
+            <UserRole>{user?.role || 'Music Producer'}</UserRole>
+          </UserDetails>
           <ChevronDown size={16} color="#64748b" />
+          
+          {showUserDropdown && (
+            <UserDropdown
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.2 }}
+            >
+              <UserHeader>
+                <UserHeaderName>{user?.name || 'User'}</UserHeaderName>
+                <UserHeaderEmail>{user?.email || 'user@monexa.com'}</UserHeaderEmail>
+              </UserHeader>
+              
+              <DropdownItem onClick={handleProfileClick}>
+                <User size={16} />
+                View Profile
+              </DropdownItem>
+              
+              <DropdownItem onClick={handleSettingsClick}>
+                <Settings size={16} />
+                Settings
+              </DropdownItem>
+              
+              <DropdownItem className="danger" onClick={handleLogout}>
+                <LogOut size={16} />
+                Sign Out
+              </DropdownItem>
+            </UserDropdown>
+          )}
         </UserInfo>
       </RightSection>
     </TopBarContainer>

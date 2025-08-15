@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { Download, Upload, Printer, DollarSign, Euro, PoundSterling } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { useAuth } from '../contexts/AuthContext';
 
 const DashboardContainer = styled.div`
   display: grid;
@@ -544,10 +545,13 @@ const handleDownload = () => {
 };
 
 function Dashboard() {
+  const { user } = useAuth();
+  const firstName = user?.name?.split(' ')[0] || 'User';
+  
   return (
     <DashboardContainer>
       <MainColumn>
-                 <WelcomeCard
+         <WelcomeCard
            initial={{ opacity: 0, y: 20 }}
            animate={{ opacity: 1, y: 0 }}
            transition={{ duration: 0.5 }}
@@ -555,8 +559,8 @@ function Dashboard() {
            <FloatingParticle size="3px" color="rgba(255, 255, 255, 0.4)" top="15%" left="20%" duration="7s" delay="1s" />
            <FloatingParticle size="5px" color="rgba(59, 130, 246, 0.6)" top="70%" left="80%" duration="9s" delay="2s" />
            <FloatingParticle size="2px" color="rgba(255, 255, 255, 0.3)" top="40%" left="85%" duration="5s" delay="0.5s" />
-                                 <WelcomeContent>
-              <WelcomeTitle>Welcome back, Russell!</WelcomeTitle>
+           <WelcomeContent>
+              <WelcomeTitle>Welcome back, {firstName}!</WelcomeTitle>
               <WelcomeSubtitle>Your music empire dashboard - track sales, manage beats, and monitor your success</WelcomeSubtitle>
               <WelcomeStats>
                 <StatItem>
@@ -602,7 +606,7 @@ function Dashboard() {
               <ProfileGrid>
                 <ProfileItem>
                   <ProfileLabel>Producer Name</ProfileLabel>
-                  <ProfileValue>Russell Mwaura</ProfileValue>
+                  <ProfileValue>{user?.name || 'User'}</ProfileValue>
                 </ProfileItem>
                 <ProfileItem>
                   <ProfileLabel>Studio Since</ProfileLabel>
@@ -610,7 +614,7 @@ function Dashboard() {
                 </ProfileItem>
                 <ProfileItem>
                   <ProfileLabel>Specialty</ProfileLabel>
-                  <ProfileValue>Hip-Hop & Trap</ProfileValue>
+                  <ProfileValue>{user?.role || 'Music Producer'}</ProfileValue>
                 </ProfileItem>
                 <ProfileItem>
                   <ProfileLabel>Location</ProfileLabel>
@@ -675,7 +679,7 @@ function Dashboard() {
            </Table>
          </Card>
 
-                 <Footer>Last updated: December 15, 2024 • Monexa - Russell's Music Studio</Footer>
+                 <Footer>Last updated: December 15, 2024 • Monexa - {user?.name || 'User'}'s Music Studio</Footer>
       </MainColumn>
 
       <RightColumn>

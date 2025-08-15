@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   LayoutDashboard, 
   User, 
@@ -143,16 +144,19 @@ const quickLinks = [
 ];
 
 function Sidebar() {
+  const { user } = useAuth();
+  const firstName = user?.name?.split(' ')[0] || 'User';
+  
   return (
     <SidebarContainer
       initial={{ x: -280 }}
       animate={{ x: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
     >
-                   <LogoSection>
-               <LogoText>Monexa</LogoText>
-               <LogoSubtitle>Russell's Music Studio</LogoSubtitle>
-             </LogoSection>
+      <LogoSection>
+        <LogoText>Monexa</LogoText>
+        <LogoSubtitle>{firstName}'s Music Studio</LogoSubtitle>
+      </LogoSection>
 
                    <NavSection>
                <SectionTitle>Studio Menu</SectionTitle>

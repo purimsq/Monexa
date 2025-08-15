@@ -4,6 +4,10 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import styled from 'styled-components';
 
+// Auth
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Auth from './components/Auth';
+
 // Components
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
@@ -73,7 +77,7 @@ function AppContent() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/my-account" element={<MyAccount />} />
           <Route path="/payment-history" element={<PaymentHistory />} />
-                    <Route path="/transaction-history" element={<TransactionHistory />} />
+          <Route path="/transaction-history" element={<TransactionHistory />} />
           <Route path="/cards" element={<Cards />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/settings" element={<Settings />} />
@@ -91,38 +95,72 @@ function AppContent() {
   );
 }
 
+function AuthenticatedApp() {
+  return (
+    <AppContainer>
+      <Sidebar />
+      <MainContent>
+        <TopBar />
+        <AppContent />
+      </MainContent>
+    </AppContainer>
+  );
+}
+
+function AppRouter() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div style={{
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#f8fafc'
+      }}>
+        <div style={{
+          fontSize: '18px',
+          color: '#64748b',
+          fontWeight: '500'
+        }}>
+          Loading Monexa...
+        </div>
+      </div>
+    );
+  }
+
+  return isAuthenticated ? <AuthenticatedApp /> : <Auth />;
+}
+
 function App() {
   return (
-    <Router>
-      <AppContainer>
-        <Sidebar />
-        <MainContent>
-          <TopBar />
-          <AppContent />
-        </MainContent>
-      </AppContainer>
-
-      {/* Toast Notifications */}
-      <ToastContainer
-        position="bottom-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-        toastStyle={{
-          backgroundColor: '#ffffff',
-          color: '#1e293b',
-          borderRadius: '12px',
-          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #e2e8f0'
-        }}
-      />
-    </Router>
+    <AuthProvider>
+      <Router>
+        <AppRouter />
+        
+        {/* Toast Notifications */}
+        <ToastContainer
+          position="bottom-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+          toastStyle={{
+            backgroundColor: '#ffffff',
+            color: '#1e293b',
+            borderRadius: '12px',
+            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+            border: '1px solid #e2e8f0'
+          }}
+        />
+      </Router>
+    </AuthProvider>
   );
 }
 

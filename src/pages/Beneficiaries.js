@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { Users, Plus, Edit, Trash2, Search, Filter } from 'lucide-react';
+import apiService from '../services/api';
+import AddBeneficiaryModal from '../components/AddBeneficiaryModal';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -349,12 +351,36 @@ const clients = [
 
 const Beneficiaries = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [beneficiaries, setBeneficiaries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddBeneficiaryModal, setShowAddBeneficiaryModal] = useState(false);
+
+  // Load beneficiaries on component mount
+  useEffect(() => {
+    loadBeneficiaries();
+  }, []);
+
+  const loadBeneficiaries = async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.getBeneficiaries();
+      if (response.success) {
+        setBeneficiaries(response.beneficiaries);
+      }
+    } catch (error) {
+      console.error('Failed to load beneficiaries:', error);
+      toast.error('Failed to load beneficiaries');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAddClient = () => {
-    toast.success('Add client feature coming soon!', {
-      position: "bottom-right",
-      autoClose: 3000,
-    });
+    setShowAddBeneficiaryModal(true);
+  };
+
+  const handleBeneficiaryAdded = () => {
+    loadBeneficiaries(); // Reload beneficiaries when a new one is added
   };
 
   const handleEditClient = (clientId) => {
@@ -371,9 +397,9 @@ const Beneficiaries = () => {
     });
   };
 
-  const filteredClients = clients.filter(client =>
-    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredClients = beneficiaries.filter(beneficiary =>
+    beneficiary.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    beneficiary.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -407,43 +433,43 @@ const Beneficiaries = () => {
       </Controls>
 
       <ClientsGrid>
-        {filteredClients.map((client, index) => (
+        {filteredClients.map((beneficiary, index) => (
           <ClientCard
-            key={client.id}
+            key={beneficiary.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: index * 0.1 }}
           >
             <ClientHeader>
-              <ClientAvatar>{client.avatar}</ClientAvatar>
+              <ClientAvatar>{beneficiary.name?.charAt(0) || 'B'}</ClientAvatar>
               <ClientInfo>
-                <ClientName>{client.name}</ClientName>
-                <ClientEmail>{client.email}</ClientEmail>
+                <ClientName>{beneficiary.name}</ClientName>
+                <ClientEmail>{beneficiary.email}</ClientEmail>
               </ClientInfo>
             </ClientHeader>
 
             <ClientStats>
               <StatItem>
-                <StatNumber>{client.beatsPurchased}</StatNumber>
-                <StatLabel>Beats</StatLabel>
+                <StatNumber>{beneficiary.account_number}</StatNumber>
+                <StatLabel>Account</StatLabel>
               </StatItem>
               <StatItem>
-                <StatNumber>{client.totalSpent}</StatNumber>
-                <StatLabel>Spent</StatLabel>
+                <StatNumber>{beneficiary.bank_name}</StatNumber>
+                <StatLabel>Bank</StatLabel>
               </StatItem>
               <StatItem>
-                <StatNumber>{client.lastPurchase}</StatNumber>
-                <StatLabel>Last Purchase</StatLabel>
+                <StatNumber>{beneficiary.relationship}</StatNumber>
+                <StatLabel>Relationship</StatLabel>
               </StatItem>
             </ClientStats>
 
             <ClientActions>
-              <ActionButton onClick={() => handleEditClient(client.id)}>
+              <ActionButton onClick={() => handleEditClient(beneficiary.id)}>
                 <Edit size={16} />
               </ActionButton>
               <ActionButton 
                 className="danger"
-                onClick={() => handleDeleteClient(client.id)}
+                onClick={() => handleDeleteClient(beneficiary.id)}
               >
                 <Trash2 size={16} />
               </ActionButton>
@@ -451,6 +477,12 @@ const Beneficiaries = () => {
           </ClientCard>
         ))}
       </ClientsGrid>
+
+      <AddBeneficiaryModal 
+        isOpen={showAddBeneficiaryModal}
+        onClose={() => setShowAddBeneficiaryModal(false)}
+        onBeneficiaryAdded={handleBeneficiaryAdded}
+      />
     </Container>
   );
 };

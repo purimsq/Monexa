@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import apiService from '../services/api';
+import GoalsModal from '../components/GoalsModal';
 import { 
   CreditCard, 
   DollarSign, 
@@ -502,12 +505,12 @@ const walletData = {
   lastUpdated: '2024-12-15'
 };
 
-const cards = [
+const getMockCards = (userName) => [
   {
     id: 1,
     type: 'Visa',
     number: '4532 **** **** 1234',
-    holder: 'Russell Mwaura',
+    holder: userName || 'User',
     expiry: '12/26',
     cvv: '***',
     isDefault: true
@@ -516,7 +519,7 @@ const cards = [
     id: 2,
     type: 'Mastercard',
     number: '5425 **** **** 5678',
-    holder: 'Russell Mwaura',
+    holder: userName || 'User',
     expiry: '08/25',
     cvv: '***',
     isDefault: false
@@ -525,7 +528,7 @@ const cards = [
     id: 3,
     type: 'Visa',
     number: '4111 **** **** 9999',
-    holder: 'Russell Mwaura',
+    holder: userName || 'User',
     expiry: '03/27',
     cvv: '***',
     isDefault: false
@@ -534,7 +537,7 @@ const cards = [
     id: 4,
     type: 'Mastercard',
     number: '5555 **** **** 4444',
-    holder: 'Russell Mwaura',
+    holder: userName || 'User',
     expiry: '11/26',
     cvv: '***',
     isDefault: false
@@ -596,11 +599,44 @@ const transactions = [
 
 const MyAccount = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [cards, setCards] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authType, setAuthType] = useState('');
   const [pin, setPin] = useState('');
   const [showCardDetails, setShowCardDetails] = useState({});
+  const [showGoalsModal, setShowGoalsModal] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
+
+  // Load data on component mount
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [cardsResponse, transactionsResponse] = await Promise.all([
+        apiService.getCards(),
+        apiService.getTransactions({ limit: 5 })
+      ]);
+
+      if (cardsResponse.success) {
+        setCards(cardsResponse.cards);
+      }
+
+      if (transactionsResponse.success) {
+        setTransactions(transactionsResponse.transactions);
+      }
+    } catch (error) {
+      console.error('Failed to load data:', error);
+      toast.error('Failed to load account data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCardClick = (card) => {
     setSelectedCard(card);
@@ -609,18 +645,25 @@ const MyAccount = () => {
   };
 
   const handleDeposit = () => {
-    setAuthType('deposit');
-    setShowAuthModal(true);
+    toast.info('Deposit functionality coming soon - will integrate with payment gateway!', {
+      position: "bottom-right",
+      autoClose: 3000,
+    });
   };
 
   const handleWithdraw = () => {
-    setAuthType('withdraw');
-    setShowAuthModal(true);
+    toast.info('Withdraw functionality coming soon - will integrate with bank APIs!', {
+      position: "bottom-right",
+      autoClose: 3000,
+    });
   };
 
   const handlePayment = () => {
-    setAuthType('payment');
-    setShowAuthModal(true);
+    navigate('/beneficiaries');
+    toast.success('Redirecting to beneficiaries for payments...', {
+      position: "bottom-right",
+      autoClose: 2000,
+    });
   };
 
   const handleAuthSubmit = () => {
@@ -658,16 +701,16 @@ const MyAccount = () => {
   const handleQuickAction = (action) => {
     switch (action) {
       case 'addCard':
-        toast.info('Add new payment card functionality coming soon!', {
+        navigate('/cards');
+        toast.success('Redirecting to card management...', {
           position: "bottom-right",
-          autoClose: 3000,
+          autoClose: 2000,
         });
         break;
       case 'setGoal':
-        toast.info('Set financial goal functionality coming soon!', {
-          position: "bottom-right",
-          autoClose: 3000,
-        });
+        // Open financial goals modal
+        console.log('Opening Goals Modal...'); // Debug line
+        setShowGoalsModal(true);
         break;
       case 'exportData':
         toast.success('Financial data exported successfully!', {
@@ -676,15 +719,17 @@ const MyAccount = () => {
         });
         break;
       case 'notifications':
-        toast.info('Notification settings coming soon!', {
+        navigate('/notifications');
+        toast.success('Redirecting to notifications...', {
           position: "bottom-right",
-          autoClose: 3000,
+          autoClose: 2000,
         });
         break;
       case 'settings':
-        toast.info('Financial settings coming soon!', {
+        navigate('/settings');
+        toast.success('Redirecting to settings...', {
           position: "bottom-right",
-          autoClose: 3000,
+          autoClose: 2000,
         });
         break;
       case 'help':
@@ -976,6 +1021,11 @@ const MyAccount = () => {
           </AuthenticationModal>
         )}
       </AnimatePresence>
+
+      <GoalsModal 
+        isOpen={showGoalsModal} 
+        onClose={() => setShowGoalsModal(false)} 
+      />
     </Container>
   );
 };

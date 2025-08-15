@@ -1,27 +1,37 @@
-# 🎵 Monexa - Russell's Music Studio
+# 🎵 Monexa - Music Production Finance Platform
 
-A modern desktop application for music producers to manage their beats, track sales, and monitor their music business. Built with React, Electron, and styled-components.
-
-![Monexa Dashboard](https://img.shields.io/badge/Status-Complete-brightgreen)
-![React](https://img.shields.io/badge/React-18.2.0-blue)
-![Electron](https://img.shields.io/badge/Electron-28.0.0-purple)
-![Styled Components](https://img.shields.io/badge/Styled--Components-6.1.0-pink)
+A comprehensive financial management platform designed specifically for music producers, featuring advanced media playback capabilities and integrated financial tools.
 
 ## ✨ Features
 
-- 🎧 **Music Business Dashboard** - Track beats sold, revenue, and available inventory
-- 📊 **Sales Analytics** - Monitor your music business performance
-- 🎵 **Beat Library** - Organize and manage your music files (MP3/MP4)
-- 👥 **Client Management** - Keep track of your music clients and collaborations
-- 💰 **Financial Tracking** - Monitor income and expenses across multiple currencies
-- 🎨 **Modern UI** - Beautiful, responsive design with smooth animations
-- 🔔 **Toast Notifications** - Real-time feedback for user actions
-- 📱 **Desktop App** - Cross-platform desktop application
+### 🎬 Advanced Media Player
+- **YouTube Music Style Interface** - Minimized player with hover controls
+- **Multi-format Support** - MP3, WAV, MP4 video playback
+- **Seekable Progress Bar** - Click to jump to any position
+- **Window States** - Windowed, minimized (bottom-right), and fullscreen modes
+- **Authenticated Streaming** - Secure file access with JWT tokens
+
+### 💰 Financial Management
+- **Goal Setting** - Set and track financial objectives
+- **Card Management** - Add and manage credit/debit cards
+- **Transaction History** - Complete transaction tracking
+- **Beneficiary Management** - Client and payment recipient management
+- **Data Export** - Export financial data via email
+
+### 🔐 Authentication & Security
+- **JWT-based Authentication** - Secure session management
+- **Session Persistence** - Stay logged in until app closure
+- **Password Hashing** - bcrypt security
+- **Rate Limiting** - API protection
+
+### 🖥️ Cross-Platform
+- **Electron Desktop App** - Native desktop experience
+- **Web Browser Support** - Full browser compatibility
+- **Responsive Design** - Mobile-friendly interface
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-
 - Node.js (v16 or higher)
 - npm or yarn
 
@@ -29,182 +39,224 @@ A modern desktop application for music producers to manage their beats, track sa
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/monexa.git
+   git clone <repository-url>
    cd monexa
    ```
 
-2. **Install dependencies**
+2. **Install frontend dependencies**
    ```bash
    npm install
    ```
 
-3. **Start the development server**
+3. **Install backend dependencies**
    ```bash
-   npm start
+   cd backend
+   npm install
    ```
 
-4. **Build for production**
+4. **Initialize the database**
    ```bash
-   npm run build
+   npm run init-db
    ```
 
-5. **Package as desktop app**
+5. **Create demo user** (optional)
    ```bash
-   npm run electron-pack
+   node create-demo-user.js
    ```
+
+### Running the Application
+
+#### Option 1: Browser Only
+```bash
+# Terminal 1 - Start backend
+cd backend
+npm start
+
+# Terminal 2 - Start frontend
+npm start
+```
+
+#### Option 2: Electron + Browser
+```bash
+# Terminal 1 - Start backend
+.\start-backend.bat
+
+# Terminal 2 - Start both frontend and Electron
+npm run electron-dev
+```
+
+### Default Credentials
+- **Email**: `demo@monexa.com`
+- **Password**: `password123`
 
 ## 📁 Project Structure
 
 ```
 monexa/
-├── public/
-│   ├── images/                 # Image assets
-│   ├── electron.js            # Main Electron process
-│   ├── preload.js             # Preload script
-│   └── index.html             # Main HTML file
-├── src/
-│   ├── components/            # Reusable components
-│   │   ├── Sidebar.js         # Navigation sidebar
-│   │   └── TopBar.js          # Top navigation bar
-│   ├── pages/                 # Application pages
-│   │   ├── Dashboard.js       # Main dashboard
-│   │   ├── Profile.js         # Producer profile
-│   │   ├── MyAccount.js       # Financial management
-│   │   ├── PaymentHistory.js  # Sales history
-│   │   ├── Beneficiaries.js   # Client management
-│   │   ├── Documents.js       # Beat library
-│   │   └── Applications.js    # Analytics
-│   ├── styles/                # Global styles
-│   │   └── GlobalStyles.css   # Global CSS
-│   └── App.js                 # Main React component
-├── package.json               # Project configuration
-└── README.md                  # Project documentation
+├── src/                     # Frontend React application
+│   ├── components/          # Reusable React components
+│   │   ├── MediaPlayer.js   # Advanced media player component
+│   │   ├── Auth*.js         # Authentication components
+│   │   └── *Modal.js        # Modal components
+│   ├── pages/               # Application pages
+│   ├── contexts/            # React contexts
+│   └── services/            # API services
+├── backend/                 # Node.js/Express backend
+│   ├── routes/              # API route handlers
+│   ├── middleware/          # Express middleware
+│   ├── config/              # Configuration files
+│   ├── scripts/             # Database scripts
+│   └── services/            # External services (email)
+├── public/                  # Static files and Electron main process
+│   ├── electron.js          # Electron main process
+│   └── preload.js           # Electron preload script
+└── backend/uploads/         # User uploaded files (gitignored)
 ```
 
-## 🎨 Design Features
+## 🛠️ Technology Stack
 
-- **Charcoal Black Theme** - Professional dark color scheme
-- **Glassmorphism Effects** - Modern glass-like UI elements
-- **Smooth Animations** - Framer Motion powered transitions
-- **Responsive Layout** - Adapts to different screen sizes
-- **Custom Illustrations** - Beautiful hand-drawn graphics
+### Frontend
+- **React 18** - User interface library
+- **Styled Components** - CSS-in-JS styling
+- **Framer Motion** - Animations and transitions
+- **React Router** - Client-side routing
+- **React Toastify** - Toast notifications
+- **Lucide React** - Icons
 
-## 🛠️ Tech Stack
+### Backend
+- **Node.js** - Runtime environment
+- **Express.js** - Web application framework
+- **SQLite3** - Lightweight database
+- **JWT** - Authentication tokens
+- **bcrypt.js** - Password hashing
+- **Multer** - File upload handling
+- **Helmet** - Security headers
 
-- **Frontend**: React 18.2.0
-- **Desktop**: Electron 28.0.0
-- **Styling**: Styled Components 6.1.0
-- **Animations**: Framer Motion
-- **Icons**: Lucide React
-- **Notifications**: React Toastify
-- **Routing**: React Router DOM
+### Desktop
+- **Electron** - Cross-platform desktop app framework
 
-## 📱 Pages Overview
+## 🎵 Media Player Features
 
-### Dashboard
-- Welcome card with custom illustration
-- Producer profile summary
-- Top clients overview
-- Recent sales table
-- Account balance display
-- Beat library preview
+The Monexa media player is designed with YouTube Music inspiration:
 
-### Beat Library
-- Full-width table layout
-- MP3/MP4 file format support
-- Upload and download functionality
-- Genre and status tracking
-- Search and filter capabilities
+### Window States
+- **Windowed** (800x600px) - Default centered view with full controls
+- **Minimized** (300x230px) - Bottom-right compact view with hover controls
+- **Maximized** - Fullscreen playback
 
-### Financial Management
-- Multi-currency support (USD, EUR, GBP)
-- Transaction history
-- Deposit/withdrawal tracking
-- Sales analytics
+### Controls
+- Play/Pause, Skip Forward/Backward
+- Volume control with mute
+- Seekable progress bar
+- Download and delete options
+- Windows-style title bar (minimize, maximize, close)
 
-### Client Management
-- Client profiles and contact info
-- Purchase history
-- Revenue tracking per client
-- Client statistics
+### Hover Behavior (Minimized Mode)
+- Clean view showing only media content
+- Controls appear on hover with smooth animations
+- YouTube-style red progress bar
+- Floating round buttons for maximize/close
 
-## 🎯 Key Features
+## 📊 Database Schema
 
-### For Music Producers
-- **Beat Organization**: Upload, categorize, and manage your music files
-- **Sales Tracking**: Monitor which beats are selling and to whom
-- **Revenue Analytics**: Track your income across different platforms
-- **Client Database**: Maintain relationships with artists and labels
+The application uses SQLite with the following main tables:
+- `users` - User accounts and profiles
+- `cards` - User payment cards
+- `transactions` - Financial transactions
+- `beneficiaries` - Payment recipients
+- `documents` - Uploaded media files
+- `goals` - Financial goals
+- `applications` - User applications
+- `notifications` - System notifications
 
-### User Experience
-- **Intuitive Navigation**: Clean sidebar with easy access to all features
-- **Real-time Feedback**: Toast notifications for all user actions
-- **Responsive Design**: Works perfectly on different screen sizes
-- **Professional Look**: Modern UI that reflects the music industry
+## 🔧 API Endpoints
 
-## 🔧 Development
+### Authentication
+- `POST /api/auth/login` - User login
+- `POST /api/auth/register` - User registration
+- `GET /api/auth/me` - Get current user
 
-### Available Scripts
+### Media
+- `GET /api/documents` - List user documents
+- `POST /api/documents/upload` - Upload new media
+- `GET /api/documents/:id/stream` - Stream media file
+- `GET /api/documents/:id/download` - Download media file
 
-- `npm start` - Start development server
-- `npm run build` - Build for production
-- `npm run electron` - Start Electron app
-- `npm run electron-pack` - Package as desktop application
-- `npm test` - Run tests
-- `npm run eject` - Eject from Create React App
+### Financial
+- `GET /api/cards` - List user cards
+- `POST /api/cards` - Add new card
+- `GET /api/transactions` - Transaction history
+- `GET /api/goals` - Financial goals
+- `POST /api/goals` - Create new goal
 
-### Environment Variables
+## 🚦 Development
 
-Create a `.env` file in the root directory:
-
-```env
-REACT_APP_NAME=Monexa
-REACT_APP_VERSION=1.0.0
-```
-
-## 📦 Building for Distribution
-
-### Windows (.exe)
+### Backend Development
 ```bash
-npm run electron-pack
+cd backend
+npm run dev  # Start with nodemon for auto-restart
 ```
 
-### macOS (.dmg)
+### Frontend Development
 ```bash
-npm run electron-pack
+npm start  # Start React development server
 ```
 
-### Linux (.AppImage)
+### Linting
 ```bash
-npm run electron-pack
+npm run lint      # Frontend linting
+cd backend && npm run lint  # Backend linting
 ```
+
+## 📱 Electron Features
+
+- Native desktop application
+- System tray integration
+- File system access for media files
+- Native window controls
+- Auto-updater ready structure
+
+## 🔒 Security Features
+
+- JWT-based authentication
+- CORS configuration
+- Rate limiting on API endpoints
+- File upload validation
+- SQL injection protection
+- Password strength requirements
+
+## 🌟 Recent Updates
+
+### YouTube Music Style Player
+- Redesigned minimized player interface
+- Hover-activated controls
+- Improved positioning (bottom-right)
+- Enhanced visual feedback
+- Taller minimized view (230px height)
+
+### Backend Integration
+- Full API integration replacing localStorage
+- Real-time data synchronization
+- Secure file streaming
+- Session management
+- Complete CRUD operations
+
+## 📄 License
+
+This project is licensed under the MIT License.
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📄 License
+## 📞 Support
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👨‍💻 Author
-
-**Russell Mwaura**
-- Music Producer & Developer
-- Nairobi, Kenya
-
-## 🙏 Acknowledgments
-
-- React team for the amazing framework
-- Electron team for desktop app capabilities
-- Styled Components for CSS-in-JS
-- Framer Motion for smooth animations
-- Lucide for beautiful icons
+For support and questions, please open an issue in the repository.
 
 ---
 
-**Monexa** - The best place for music producers to manage their beats and business! 🎵✨ 
+**Built with ❤️ for music producers worldwide** 🎵

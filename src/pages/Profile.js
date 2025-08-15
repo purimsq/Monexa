@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { User, Edit, Save, X } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const Container = styled.div`
   max-width: 800px;
@@ -187,27 +188,59 @@ const CancelButton = styled.button`
 `;
 
 const Profile = () => {
+  const { user, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: 'Russell Mwaura',
-    email: 'russell@monexa.com',
-    phone: '+254 700 123 456',
-    location: 'Nairobi, Kenya',
-    specialty: 'Hip-Hop & Trap Production',
-    experience: '5+ years',
-    bio: 'Professional music producer specializing in Hip-Hop and Trap beats. Creating unique sounds that resonate with artists worldwide.'
+    name: '',
+    email: '',
+    phone: '',
+    location: '',
+    specialty: '',
+    experience: '',
+    bio: ''
   });
+
+  // Initialize form data with user information
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        location: user.location || '',
+        specialty: user.role || 'Music Producer',
+        experience: user.experience || '',
+        bio: user.bio || `Professional ${user.role || 'music producer'} passionate about creating amazing music.`
+      });
+    }
+  }, [user]);
 
   const handleEdit = () => {
     setIsEditing(true);
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
-    toast.success('Profile updated successfully!', {
-      position: "bottom-right",
-      autoClose: 3000,
-    });
+  const handleSave = async () => {
+    try {
+      const result = await updateProfile(formData);
+      
+      if (result.success) {
+        setIsEditing(false);
+        toast.success('Profile updated successfully!', {
+          position: "bottom-right",
+          autoClose: 3000,
+        });
+      } else {
+        toast.error(result.error || 'Failed to update profile', {
+          position: "bottom-right",
+          autoClose: 4000,
+        });
+      }
+    } catch (error) {
+      toast.error('An error occurred while updating profile', {
+        position: "bottom-right",
+        autoClose: 4000,
+      });
+    }
   };
 
   const handleCancel = () => {
@@ -237,10 +270,10 @@ const Profile = () => {
         transition={{ duration: 0.6 }}
       >
         <ProfileHeader>
-          <Avatar>RM</Avatar>
+          <Avatar>{user?.avatar || user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}</Avatar>
           <ProfileInfo>
-            <ProfileName>{formData.name}</ProfileName>
-            <ProfileRole>{formData.specialty}</ProfileRole>
+            <ProfileName>{formData.name || user?.name || 'User'}</ProfileName>
+            <ProfileRole>{formData.specialty || user?.role || 'Music Producer'}</ProfileRole>
           </ProfileInfo>
           {!isEditing && (
             <EditButton onClick={handleEdit}>

@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
-import { 
-  Settings as SettingsIcon, 
-  ArrowLeft, 
-  User, 
-  Bell, 
-  CreditCard, 
-  Shield, 
-  Palette, 
+import {
+  Settings as SettingsIcon,
+  ArrowLeft,
+  User,
+  Bell,
+  CreditCard,
+  Shield,
+  Palette,
   Download,
   Globe,
   Save,
@@ -20,9 +20,11 @@ import {
   X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import apiService from '../services/api';
 
 const Container = styled.div`
-  max-width: 1600px;
+  max-width: 1800px;
   margin: 0 auto;
   padding: 32px;
 `;
@@ -66,9 +68,9 @@ const Title = styled.h1`
 const SettingsGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 32px;
+  gap: 40px;
   
-  @media (max-width: 1400px) {
+  @media (max-width: 1600px) {
     grid-template-columns: 1fr;
     gap: 32px;
   }
@@ -77,12 +79,13 @@ const SettingsGrid = styled.div`
 const SettingsCard = styled(motion.div)`
   background: white;
   border-radius: 20px;
-  padding: 32px;
+  padding: 40px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
   border: 1px solid #f1f5f9;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  min-height: 500px;
 
   &::before {
     content: '';
@@ -169,8 +172,9 @@ const SettingItem = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 0;
+  padding: 20px 0;
   border-bottom: 1px solid #f1f5f9;
+  gap: 24px;
 
   &:last-child {
     border-bottom: none;
@@ -184,12 +188,14 @@ const SettingInfo = styled.div`
 const SettingLabel = styled.div`
   font-weight: 600;
   color: #1e293b;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  font-size: 15px;
 `;
 
 const SettingDescription = styled.div`
-  font-size: 14px;
+  font-size: 13px;
   color: #64748b;
+  line-height: 1.4;
 `;
 
 const ToggleSwitch = styled.label`
@@ -239,10 +245,10 @@ const ToggleSlider = styled.span`
 `;
 
 const Input = styled.input`
-  width: 100%;
-  padding: 12px 16px;
+  min-width: 280px;
+  padding: 14px 18px;
   border: 2px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 14px;
   color: #1e293b;
   background: white;
@@ -260,10 +266,10 @@ const Input = styled.input`
 `;
 
 const Select = styled.select`
-  width: 100%;
-  padding: 12px 16px;
+  min-width: 280px;
+  padding: 14px 18px;
   border: 2px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 14px;
   color: #1e293b;
   background: white;
@@ -432,13 +438,15 @@ const shimmerAnimation = `
 
 const Settings = () => {
   const navigate = useNavigate();
+  const { user, updateProfile } = useAuth();
+  
   const [settings, setSettings] = useState({
     // Profile Settings
-    firstName: 'Russell',
-    lastName: 'Mwaura',
-    email: 'russell.mwaura@email.com',
-    phone: '+254 700 123 456',
-    bio: 'Professional music producer and beatmaker',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    bio: '',
     
     // Notification Settings
     emailNotifications: true,
@@ -468,19 +476,124 @@ const Settings = () => {
     allowMessages: true
   });
 
-  const handleSettingChange = (key, value) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
-    toast.success('Setting updated', {
-      position: "bottom-right",
-      autoClose: 2000,
-    });
+  // Initialize settings with user data
+  useEffect(() => {
+    loadUserSettings();
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadUserSettings = async () => {
+    if (user) {
+      try {
+        const nameParts = user.name ? user.name.split(' ') : ['', ''];
+        
+        // Load user settings from API
+        const settingsResponse = await apiService.getUserSettings();
+        const userSettings = settingsResponse.success ? settingsResponse.settings : {};
+
+        setSettings(prev => ({
+          ...prev,
+          firstName: nameParts[0] || '',
+          lastName: nameParts.slice(1).join(' ') || '',
+          email: user.email || '',
+          phone: user.phone || '',
+          bio: user.bio || `Professional ${user.role || 'music producer'} passionate about creating amazing music.`,
+          
+          // Merge with user settings from API
+          emailNotifications: userSettings.email_notifications ?? prev.emailNotifications,
+          pushNotifications: userSettings.push_notifications ?? prev.pushNotifications,
+          salesNotifications: userSettings.sales_notifications ?? prev.salesNotifications,
+          messageNotifications: userSettings.message_notifications ?? prev.messageNotifications,
+          systemNotifications: userSettings.system_notifications ?? prev.systemNotifications,
+          defaultCurrency: userSettings.default_currency ?? prev.defaultCurrency,
+          autoWithdraw: userSettings.auto_withdraw ?? prev.autoWithdraw,
+          paymentReminders: userSettings.payment_reminders ?? prev.paymentReminders,
+          twoFactorAuth: userSettings.two_factor_auth ?? prev.twoFactorAuth,
+          loginAlerts: userSettings.login_alerts ?? prev.loginAlerts,
+          sessionTimeout: userSettings.session_timeout ?? prev.sessionTimeout,
+          theme: userSettings.theme ?? prev.theme,
+          accentColor: userSettings.accent_color ?? prev.accentColor,
+          compactMode: userSettings.compact_mode ?? prev.compactMode,
+          profileVisibility: userSettings.profile_visibility ?? prev.profileVisibility,
+          showOnlineStatus: userSettings.show_online_status ?? prev.showOnlineStatus,
+          allowMessages: userSettings.allow_messages ?? prev.allowMessages
+        }));
+      } catch (error) {
+        console.error('Failed to load user settings:', error);
+      }
+    }
   };
 
-  const handleSaveProfile = () => {
-    toast.success('Profile updated successfully', {
-      position: "bottom-right",
-      autoClose: 3000,
-    });
+  const handleSettingChange = async (key, value) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
+    
+    // Update setting in backend
+    try {
+      const settingData = {};
+      
+      // Map frontend setting names to backend names
+      const settingMap = {
+        emailNotifications: 'email_notifications',
+        pushNotifications: 'push_notifications',
+        salesNotifications: 'sales_notifications',
+        messageNotifications: 'message_notifications',
+        systemNotifications: 'system_notifications',
+        defaultCurrency: 'default_currency',
+        autoWithdraw: 'auto_withdraw',
+        paymentReminders: 'payment_reminders',
+        twoFactorAuth: 'two_factor_auth',
+        loginAlerts: 'login_alerts',
+        sessionTimeout: 'session_timeout',
+        theme: 'theme',
+        accentColor: 'accent_color',
+        compactMode: 'compact_mode',
+        profileVisibility: 'profile_visibility',
+        showOnlineStatus: 'show_online_status',
+        allowMessages: 'allow_messages'
+      };
+
+      const backendKey = settingMap[key] || key;
+      settingData[backendKey] = value;
+
+      await apiService.updateUserSettings(settingData);
+      
+      toast.success('Setting updated', {
+        position: "bottom-right",
+        autoClose: 2000,
+      });
+    } catch (error) {
+      console.error('Failed to update setting:', error);
+      toast.error('Failed to update setting');
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      const profileData = {
+        name: `${settings.firstName} ${settings.lastName}`.trim(),
+        email: settings.email,
+        phone: settings.phone,
+        bio: settings.bio
+      };
+      
+      const result = await updateProfile(profileData);
+      
+      if (result.success) {
+        toast.success('Profile updated successfully', {
+          position: "bottom-right",
+          autoClose: 3000,
+        });
+      } else {
+        toast.error(result.error || 'Failed to update profile', {
+          position: "bottom-right",
+          autoClose: 4000,
+        });
+      }
+    } catch (error) {
+      toast.error('An error occurred while updating profile', {
+        position: "bottom-right",
+        autoClose: 4000,
+      });
+    }
   };
 
   const handleExportData = () => {
@@ -536,10 +649,10 @@ const Settings = () => {
            </CardHeader>
 
            <ProfileSection>
-             <ProfileAvatar>RM</ProfileAvatar>
+             <ProfileAvatar>{user?.avatar || user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}</ProfileAvatar>
              <ProfileInfo>
-               <ProfileName>Russell Mwaura</ProfileName>
-               <ProfileEmail>russell.mwaura@email.com</ProfileEmail>
+               <ProfileName>{user?.name || 'User'}</ProfileName>
+               <ProfileEmail>{user?.email || 'user@email.com'}</ProfileEmail>
              </ProfileInfo>
            </ProfileSection>
 

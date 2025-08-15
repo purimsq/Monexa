@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import apiService from '../services/api';
+import AddCardModal from '../components/AddCardModal';
 import { 
   CreditCard, 
   Lock, 
@@ -257,13 +260,13 @@ const DefaultBadge = styled.div`
   right: 16px;
 `;
 
-// Dummy data - same as in MyAccount.js
-const cards = [
+// Dynamic card data based on current user
+const getMockCards = (userName) => [
   {
     id: 1,
     type: 'Visa',
     number: '4532 **** **** 1234',
-    holder: 'Russell Mwaura',
+    holder: userName || 'User',
     expiry: '12/26',
     cvv: '***',
     isDefault: true
@@ -272,7 +275,7 @@ const cards = [
     id: 2,
     type: 'Mastercard',
     number: '5425 **** **** 5678',
-    holder: 'Russell Mwaura',
+    holder: userName || 'User',
     expiry: '08/25',
     cvv: '***',
     isDefault: false
@@ -281,7 +284,7 @@ const cards = [
     id: 3,
     type: 'Visa',
     number: '4111 **** **** 9999',
-    holder: 'Russell Mwaura',
+    holder: userName || 'User',
     expiry: '03/27',
     cvv: '***',
     isDefault: false
@@ -290,7 +293,7 @@ const cards = [
     id: 4,
     type: 'Mastercard',
     number: '5555 **** **** 4444',
-    holder: 'Russell Mwaura',
+    holder: userName || 'User',
     expiry: '11/26',
     cvv: '***',
     isDefault: false
@@ -299,9 +302,33 @@ const cards = [
 
 const Cards = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [cards, setCards] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCardDetails, setShowCardDetails] = useState({});
   const [filterType, setFilterType] = useState('all');
+  const [showAddCardModal, setShowAddCardModal] = useState(false);
+
+  // Load cards on component mount
+  useEffect(() => {
+    loadCards();
+  }, []);
+
+  const loadCards = async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.getCards();
+      if (response.success) {
+        setCards(response.cards);
+      }
+    } catch (error) {
+      console.error('Failed to load cards:', error);
+      toast.error('Failed to load cards');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCardClick = (card) => {
     setShowCardDetails(prev => ({ ...prev, [card.id]: !prev[card.id] }));
@@ -312,10 +339,11 @@ const Cards = () => {
   };
 
   const handleAddCard = () => {
-    toast.info('Add new card functionality coming soon!', {
-      position: "bottom-right",
-      autoClose: 3000,
-    });
+    setShowAddCardModal(true);
+  };
+
+  const handleCardAdded = () => {
+    loadCards(); // Reload cards when a new card is added
   };
 
   const handleEditCard = (card) => {
@@ -325,11 +353,30 @@ const Cards = () => {
     });
   };
 
-  const handleDeleteCard = (card) => {
-    toast.warning(`Delete ${card.type} card functionality coming soon!`, {
-      position: "bottom-right",
-      autoClose: 3000,
-    });
+  const handleSetDefaultCard = async (card) => {
+    try {
+      const response = await apiService.setDefaultCard(card.id);
+      if (response.success) {
+        toast.success('Default card updated successfully!');
+        loadCards(); // Reload cards to reflect changes
+      }
+    } catch (error) {
+      console.error('Failed to set default card:', error);
+      toast.error('Failed to update default card');
+    }
+  };
+
+  const handleDeleteCard = async (card) => {
+    try {
+      const response = await apiService.deleteCard(card.id);
+      if (response.success) {
+        toast.success('Card deleted successfully!');
+        loadCards(); // Reload cards
+      }
+    } catch (error) {
+      console.error('Failed to delete card:', error);
+      toast.error('Failed to delete card');
+    }
   };
 
   const filteredCards = cards.filter(card => {
@@ -466,6 +513,12 @@ const Cards = () => {
           No cards found matching your search criteria.
         </div>
       )}
+
+      <AddCardModal 
+        isOpen={showAddCardModal}
+        onClose={() => setShowAddCardModal(false)}
+        onCardAdded={handleCardAdded}
+      />
     </Container>
   );
 };
