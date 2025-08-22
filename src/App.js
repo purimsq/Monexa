@@ -7,6 +7,8 @@ import styled from 'styled-components';
 // Auth
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Auth from './components/Auth';
+import SessionLockScreen from './components/SessionLockScreen';
+import SessionTimeoutIndicator from './components/SessionTimeoutIndicator';
 
 // Components
 import Sidebar from './components/Sidebar';
@@ -103,12 +105,13 @@ function AuthenticatedApp() {
         <TopBar />
         <AppContent />
       </MainContent>
+      <SessionTimeoutIndicator />
     </AppContainer>
   );
 }
 
 function AppRouter() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, isSessionLocked } = useAuth();
 
   if (isLoading) {
     return (
@@ -128,6 +131,11 @@ function AppRouter() {
         </div>
       </div>
     );
+  }
+
+  // Show session lock screen if session is locked
+  if (isSessionLocked) {
+    return <SessionLockScreen />;
   }
 
   return isAuthenticated ? <AuthenticatedApp /> : <Auth />;

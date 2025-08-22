@@ -658,10 +658,24 @@ const Settings = () => {
 
       await apiService.updateUserSettings(settingData);
       
-      toast.success('Setting updated', {
-        position: "bottom-right",
-        autoClose: 2000,
-      });
+      // If session timeout was updated, show a special message and trigger custom event
+      if (key === 'sessionTimeout') {
+        // Trigger custom event to notify AuthContext
+        const event = new CustomEvent('sessionTimeoutChanged', {
+          detail: value
+        });
+        window.dispatchEvent(event);
+        
+        toast.success(`Session timeout updated to ${value} minutes`, {
+          position: "bottom-right",
+          autoClose: 3000,
+        });
+      } else {
+        toast.success('Setting updated', {
+          position: "bottom-right",
+          autoClose: 2000,
+        });
+      }
     } catch (error) {
       console.error('Failed to update setting:', error);
       toast.error('Failed to update setting');
@@ -950,6 +964,7 @@ const Settings = () => {
               value={settings.sessionTimeout}
               onChange={(e) => handleSettingChange('sessionTimeout', e.target.value)}
             >
+                             <option value="2">2 minutes</option>
               <option value="15">15 minutes</option>
               <option value="30">30 minutes</option>
               <option value="60">1 hour</option>
