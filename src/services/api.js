@@ -491,8 +491,8 @@ class ApiService {
     }
 
     // Data Export API
-    async exportData() {
-        return this.post('/users/export-data');
+    async exportData(password) {
+        return this.post('/users/export-data', { password });
     }
 
     // Health check

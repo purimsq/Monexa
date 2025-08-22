@@ -699,6 +699,7 @@ const Settings = () => {
   const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
   const [show2FAModal, setShow2FAModal] = useState(false);
   const [showSessionModal, setShowSessionModal] = useState(false);
+  const [showExportPasswordModal, setShowExportPasswordModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState(null);
 
@@ -876,14 +877,21 @@ const Settings = () => {
     }
   };
 
-  const handleExportData = async () => {
+  const handleExportData = () => {
+    setShowExportPasswordModal(true);
+  };
+
+  const handleExportPasswordVerification = async (password) => {
     try {
+      setModalLoading(true);
+      setModalError(null);
+
       // Show loading toast
       const loadingToast = toast.loading('Preparing your data export...', {
         position: "bottom-right",
       });
 
-      const result = await apiService.exportData();
+      const result = await apiService.exportData(password);
       
       // Dismiss loading toast
       toast.dismiss(loadingToast);
@@ -893,18 +901,15 @@ const Settings = () => {
           position: "bottom-right",
           autoClose: 5000,
         });
+        setShowExportPasswordModal(false);
       } else {
-        toast.error(result.error || 'Failed to export data', {
-          position: "bottom-right",
-          autoClose: 3000,
-        });
+        setModalError(result.error || 'Failed to export data');
       }
     } catch (error) {
       console.error('Export data error:', error);
-      toast.error('Failed to export data. Please try again later.', {
-        position: "bottom-right",
-        autoClose: 3000,
-      });
+      setModalError('Failed to export data. Please try again later.');
+    } finally {
+      setModalLoading(false);
     }
   };
 
@@ -1522,6 +1527,17 @@ const Settings = () => {
          onVerify={handlePasswordVerification}
          title="Verify Password"
          description="Enter your current password to save profile changes"
+         loading={modalLoading}
+         error={modalError}
+       />
+
+       {/* Export Data Password Modal */}
+       <PasswordVerificationModal
+         isOpen={showExportPasswordModal}
+         onClose={() => setShowExportPasswordModal(false)}
+         onVerify={handleExportPasswordVerification}
+         title="Export Data"
+         description="Enter your password to export your data securely"
          loading={modalLoading}
          error={modalError}
        />

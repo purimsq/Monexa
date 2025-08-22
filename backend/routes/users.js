@@ -407,9 +407,22 @@ router.delete('/account', verifyToken, [
 });
 
 // Export user data
-router.post('/export-data', verifyToken, async (req, res) => {
+router.post('/export-data', verifyToken, [
+    body('password').exists().withMessage('Password required for data export')
+], async (req, res) => {
     try {
-        // Get user data
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({
+                success: false,
+                error: 'Validation failed',
+                details: errors.array()
+            });
+        }
+
+        const { password } = req.body;
+
+        // Get user data with password for verification
         const user = await database.get(
             'SELECT * FROM users WHERE id = ?',
             [req.user.id]
@@ -419,6 +432,15 @@ router.post('/export-data', verifyToken, async (req, res) => {
             return res.status(404).json({
                 success: false,
                 error: 'User not found'
+            });
+        }
+
+        // Verify password before proceeding with export
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) {
+            return res.status(401).json({
+                success: false,
+                error: 'Password is incorrect. Please try again.'
             });
         }
 
@@ -458,7 +480,7 @@ router.post('/export-data', verifyToken, async (req, res) => {
             console.log('Notifications table not found, skipping...');
         }
 
-        // Prepare data for export
+        // Prepare data for export (exclude password for security)
         const exportData = {
             profile: {
                 id: user.id,
@@ -472,6 +494,7 @@ router.post('/export-data', verifyToken, async (req, res) => {
                 avatar: user.avatar,
                 created_at: user.created_at,
                 updated_at: user.updated_at
+                // Password is intentionally excluded for security
             },
             settings: userSettings || {},
             sessions: userSessions,
@@ -645,16 +668,16 @@ router.post('/export-data', verifyToken, async (req, res) => {
         });
 
         // Send email with attachments
-        const transporter = nodemailer.createTransporter({
+        const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
-                user: process.env.EMAIL_USER || 'your-email@gmail.com',
-                pass: process.env.EMAIL_PASS || 'your-app-password'
+                user: process.env.EMAIL_ADDRESS || 'your-email@gmail.com',
+                pass: process.env.EMAIL_PASSWORD || 'your-app-password'
             }
         });
 
         const mailOptions = {
-            from: process.env.EMAIL_USER || 'your-email@gmail.com',
+            from: process.env.EMAIL_ADDRESS || 'your-email@gmail.com',
             to: user.email,
             subject: 'Monexa - Your Data Export',
             html: `

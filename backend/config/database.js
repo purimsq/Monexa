@@ -57,6 +57,11 @@ class Database {
         });
     }
 
+    // Get all rows (alias for query)
+    all(sql, params = []) {
+        return this.query(sql, params);
+    }
+
     // Begin transaction
     beginTransaction() {
         return this.run('BEGIN TRANSACTION');
