@@ -14,7 +14,8 @@ import {
   Globe,
   Save,
   X,
-  Key
+  Key,
+  Monitor
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -446,6 +447,85 @@ const shimmerAnimation = `
   }
 `;
 
+// Modal styled components
+const ModalOverlay = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+`;
+
+const ModalContent = styled(motion.div)`
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+`;
+
+const CloseButton = styled.button`
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  color: #64748b;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+  }
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+  padding-right: 40px;
+`;
+
+const ModalIcon = styled.div`
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #1a1a1a, #333333);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+`;
+
+const ModalTitle = styled.h2`
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+`;
+
+const ModalDescription = styled.p`
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+`;
+
 
 
 
@@ -494,6 +574,7 @@ const Settings = () => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
   const [show2FAModal, setShow2FAModal] = useState(false);
+  const [showSessionModal, setShowSessionModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState(null);
 
@@ -875,6 +956,21 @@ const Settings = () => {
               <option value="120">2 hours</option>
             </Select>
           </SettingItem>
+
+          <SettingItem>
+            <SettingInfo>
+              <SettingLabel>Active Sessions</SettingLabel>
+              <SettingDescription>Manage your logged-in devices</SettingDescription>
+            </SettingInfo>
+            <Button
+              onClick={() => setShowSessionModal(true)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Monitor size={16} />
+              Manage Sessions
+            </Button>
+          </SettingItem>
         </SettingsCard>
 
         {/* Payment Settings - Bottom Right */}
@@ -1186,8 +1282,274 @@ const Settings = () => {
             );
           }}
         />
+
+        {/* Session Management Modal */}
+        <SessionManagementModal
+          isOpen={showSessionModal}
+          onClose={() => setShowSessionModal(false)}
+        />
       </Container>
     );
   };
+
+// Session Management Modal Component
+const SessionManagementModal = ({ isOpen, onClose }) => {
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [revoking, setRevoking] = useState(false);
+  const [revokingSessionId, setRevokingSessionId] = useState(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadSessions();
+    }
+  }, [isOpen]);
+
+  const loadSessions = async () => {
+    setLoading(true);
+    try {
+      const response = await apiService.getAllSessions();
+      if (response.success) {
+        // Ensure we only show real sessions, filter out any null/undefined entries
+        const validSessions = (response.sessions || []).filter(session => 
+          session && session.id && session.createdAt
+        );
+        setSessions(validSessions);
+      } else {
+        console.error('Failed to load sessions:', response.error);
+        setSessions([]);
+      }
+    } catch (error) {
+      console.error('Failed to load sessions:', error);
+      setSessions([]);
+      // Don't show error toast for empty sessions - this is normal
+      if (error.message && !error.message.includes('No active sessions')) {
+        toast.error('Failed to load session information');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRevokeSession = async (sessionId) => {
+    setRevokingSessionId(sessionId);
+    try {
+      const response = await apiService.revokeSession(sessionId);
+      if (response.success) {
+        toast.success('Session revoked successfully!', {
+          position: "bottom-right",
+          autoClose: 3000,
+        });
+        // Reload sessions to update the list
+        await loadSessions();
+      } else {
+        toast.error(response.error || 'Failed to revoke session');
+      }
+    } catch (error) {
+      console.error('Failed to revoke session:', error);
+      toast.error('Failed to revoke session');
+    } finally {
+      setRevokingSessionId(null);
+    }
+  };
+
+  const handleRevokeOtherSessions = async () => {
+    setRevoking(true);
+    try {
+      const response = await apiService.revokeOtherSessions();
+      if (response.success) {
+        toast.success('All other sessions revoked successfully!', {
+          position: "bottom-right",
+          autoClose: 3000,
+        });
+        // Reload sessions to update the list
+        await loadSessions();
+      } else {
+        toast.error(response.error || 'Failed to revoke sessions');
+      }
+    } catch (error) {
+      console.error('Failed to revoke sessions:', error);
+      toast.error('Failed to revoke other sessions');
+    } finally {
+      setRevoking(false);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleString();
+  };
+
+  const getDeviceInfo = (userAgent) => {
+    // Handle null, undefined, or empty userAgent
+    if (!userAgent || typeof userAgent !== 'string') return 'Unknown Device';
+    
+    const ua = userAgent.toLowerCase();
+    
+    // Simple device detection
+    if (ua.includes('mobile')) return 'Mobile Device';
+    if (ua.includes('tablet')) return 'Tablet';
+    if (ua.includes('windows')) return 'Windows PC';
+    if (ua.includes('mac')) return 'Mac';
+    if (ua.includes('linux')) return 'Linux PC';
+    if (ua.includes('android')) return 'Android Device';
+    if (ua.includes('iphone') || ua.includes('ipad')) return 'iOS Device';
+    
+    return 'Unknown Device';
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <ModalOverlay
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <ModalContent
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <CloseButton onClick={onClose}>
+          <X size={20} />
+        </CloseButton>
+
+        <ModalHeader>
+          <ModalIcon>
+            <Monitor size={20} />
+          </ModalIcon>
+          <div>
+            <ModalTitle>Session Management</ModalTitle>
+            <ModalDescription>
+              Manage your logged-in devices and sessions
+            </ModalDescription>
+          </div>
+        </ModalHeader>
+
+                 {loading ? (
+           <div style={{ textAlign: 'center', padding: '40px' }}>
+             <div style={{ fontSize: '16px', color: '#64748b' }}>Loading sessions...</div>
+           </div>
+         ) : (
+           <div>
+             <div style={{ marginBottom: '24px' }}>
+               <h4 style={{ marginBottom: '16px', color: '#1e293b' }}>Active Sessions ({sessions.length})</h4>
+                               {sessions.length === 0 ? (
+                  <div style={{ 
+                    textAlign: 'center', 
+                    padding: '40px', 
+                    color: '#64748b',
+                    fontSize: '14px'
+                  }}>
+                    No active sessions found
+                  </div>
+                ) : (
+                  sessions.map((session, index) => (
+                    <div
+                      key={session.id}
+                      style={{
+                        padding: '16px',
+                        border: session.isCurrent ? '2px solid #10b981' : '2px solid #e2e8f0',
+                        borderRadius: '12px',
+                        backgroundColor: session.isCurrent ? '#f0fdf4' : '#ffffff',
+                        marginBottom: '12px',
+                        position: 'relative'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                            <div style={{ fontWeight: '600', color: '#1e293b' }}>
+                              {session.userAgent ? getDeviceInfo(session.userAgent) : 'Unknown Device'}
+                            </div>
+                            {session.isCurrent && (
+                              <div style={{ 
+                                padding: '4px 8px', 
+                                backgroundColor: '#10b981', 
+                                color: 'white', 
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                                fontWeight: '600'
+                              }}>
+                                Current
+                              </div>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '14px', color: '#64748b', marginBottom: '4px' }}>
+                            IP: {session.ipAddress || 'Unknown'}
+                          </div>
+                          <div style={{ fontSize: '14px', color: '#64748b', marginBottom: '4px' }}>
+                            Logged in: {formatDate(session.createdAt)}
+                          </div>
+                          <div style={{ fontSize: '14px', color: '#64748b' }}>
+                            Expires: {formatDate(session.expiresAt)}
+                          </div>
+                        </div>
+                        {!session.isCurrent && (
+                          <Button
+                            className="danger"
+                            onClick={() => handleRevokeSession(session.id)}
+                            disabled={revokingSessionId === session.id}
+                            style={{ 
+                              padding: '8px 12px', 
+                              fontSize: '12px',
+                              minWidth: 'auto'
+                            }}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            {revokingSessionId === session.id ? 'Revoking...' : 'Logout'}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+             </div>
+
+            <div style={{ 
+              padding: '16px', 
+              backgroundColor: '#fef3c7', 
+              border: '1px solid #f59e0b',
+              borderRadius: '12px',
+              marginBottom: '24px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <Shield size={16} color="#f59e0b" />
+                <div style={{ fontWeight: '600', color: '#92400e' }}>Security Notice</div>
+              </div>
+              <div style={{ fontSize: '14px', color: '#92400e', lineHeight: '1.5' }}>
+                If you suspect unauthorized access to your account, you can force logout from all other devices. 
+                This will keep you logged in on this device but log out all other sessions.
+              </div>
+            </div>
+
+            <ButtonGroup>
+              <Button
+                className="secondary"
+                onClick={onClose}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="danger"
+                onClick={handleRevokeOtherSessions}
+                disabled={revoking}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {revoking ? 'Revoking...' : 'Force Logout Other Devices'}
+              </Button>
+            </ButtonGroup>
+          </div>
+        )}
+      </ModalContent>
+    </ModalOverlay>
+  );
+};
 
 export default Settings;

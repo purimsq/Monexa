@@ -208,9 +208,9 @@ router.post('/login', [
         const token = generateToken(user.id, sessionId);
         
         await database.run(
-            `INSERT INTO user_sessions (id, user_id, token, expires_at) 
-             VALUES (?, ?, ?, datetime('now', '+30 days'))`,
-            [sessionId, user.id, token]
+            `INSERT INTO user_sessions (id, user_id, token, expires_at, user_agent, ip_address) 
+             VALUES (?, ?, ?, datetime('now', '+30 days'), ?, ?)`,
+            [sessionId, user.id, token, userAgent, ipAddress]
         );
 
         // Track successful login

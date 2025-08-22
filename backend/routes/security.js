@@ -288,6 +288,104 @@ router.get('/session', verifyToken, async (req, res) => {
     }
 });
 
+// Get all user sessions
+router.get('/sessions', verifyToken, async (req, res) => {
+    try {
+        const sessions = await database.query(
+            `SELECT s.id, s.created_at, s.expires_at, s.user_agent, s.ip_address
+             FROM user_sessions s 
+             WHERE s.user_id = ?
+             ORDER BY s.created_at DESC`,
+            [req.user.id]
+        );
+
+        const formattedSessions = (sessions || []).map(session => ({
+            id: session.id,
+            createdAt: session.created_at,
+            expiresAt: session.expires_at,
+            userAgent: session.user_agent,
+            ipAddress: session.ip_address,
+            isCurrent: session.id === req.user.sessionId
+        }));
+
+        res.json({
+            success: true,
+            sessions: formattedSessions
+        });
+    } catch (error) {
+        console.error('Get sessions error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to get sessions'
+        });
+    }
+});
+
+// Revoke specific session
+router.post('/revoke-session', verifyToken, [
+    body('sessionId').isInt().withMessage('Valid session ID required')
+], async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({
+                success: false,
+                error: 'Validation failed',
+                details: errors.array()
+            });
+        }
+
+        const { sessionId } = req.body;
+
+        // Check if session belongs to user
+        const session = await database.get(
+            'SELECT id FROM user_sessions WHERE id = ? AND user_id = ?',
+            [sessionId, req.user.id]
+        );
+
+        if (!session) {
+            return res.status(404).json({
+                success: false,
+                error: 'Session not found'
+            });
+        }
+
+        // Don't allow revoking current session
+        if (sessionId === req.user.sessionId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Cannot revoke current session'
+            });
+        }
+
+        // Delete the session
+        await database.run(
+            'DELETE FROM user_sessions WHERE id = ?',
+            [sessionId]
+        );
+
+        // Log security event
+        await securityService.logSecurityEvent(
+            req.user.id,
+            'SESSION_REVOKED',
+            `Session ${sessionId} revoked`,
+            getClientIP(req),
+            req.headers['user-agent']
+        );
+
+        res.json({
+            success: true,
+            message: 'Session revoked successfully'
+        });
+    } catch (error) {
+        console.error('Revoke session error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to revoke session'
+        });
+    }
+});
+
 // Revoke all other sessions (logout from all devices)
 router.post('/revoke-other-sessions', verifyToken, async (req, res) => {
     try {

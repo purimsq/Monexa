@@ -474,6 +474,14 @@ class ApiService {
         return this.get('/security/session');
     }
 
+    async getAllSessions() {
+        return this.get('/security/sessions');
+    }
+
+    async revokeSession(sessionId) {
+        return this.post('/security/revoke-session', { sessionId });
+    }
+
     async revokeOtherSessions() {
         return this.post('/security/revoke-other-sessions');
     }

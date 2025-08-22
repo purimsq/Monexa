@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS user_sessions (
     token TEXT NOT NULL,
     expires_at DATETIME NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    user_agent TEXT,
+    ip_address TEXT,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
