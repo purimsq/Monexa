@@ -65,9 +65,26 @@ class SecurityService {
     // Enable 2FA for a user
     async enable2FA(userId, token) {
         try {
-            const verification = await this.verify2FAToken(userId, token);
-            if (!verification.success) {
-                return verification;
+            // Get user's 2FA secret (don't check if enabled yet)
+            const settings = await database.get(
+                'SELECT two_factor_secret FROM user_settings WHERE user_id = ?',
+                [userId]
+            );
+
+            if (!settings || !settings.two_factor_secret) {
+                return { success: false, error: '2FA secret not found. Please generate a new 2FA secret first.' };
+            }
+
+            // Verify the token without checking enabled status
+            const verified = speakeasy.totp.verify({
+                secret: settings.two_factor_secret,
+                encoding: 'base32',
+                token: token,
+                window: 2 // Allow 2 time steps in case of clock skew
+            });
+
+            if (!verified) {
+                return { success: false, error: 'Invalid verification code' };
             }
 
             // Enable 2FA
