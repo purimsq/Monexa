@@ -5,6 +5,7 @@ const { body, validationResult } = require('express-validator');
 const database = require('../config/database');
 const { generateToken, verifyToken, checkSessionTimeout } = require('../middleware/auth');
 const emailService = require('../services/emailService');
+const securityService = require('../services/securityService');
 
 const router = express.Router();
 
@@ -105,10 +106,20 @@ router.post('/signup', [
     }
 });
 
+// Get client IP address
+const getClientIP = (req) => {
+    return req.headers['x-forwarded-for'] || 
+           req.connection.remoteAddress || 
+           req.socket.remoteAddress ||
+           (req.connection.socket ? req.connection.socket.remoteAddress : null) ||
+           req.ip;
+};
+
 // User login
 router.post('/login', [
     body('email').isEmail().normalizeEmail().withMessage('Valid email required'),
-    body('password').exists().withMessage('Password required')
+    body('password').exists().withMessage('Password required'),
+    body('twoFactorToken').optional().isLength({ min: 6 }).withMessage('Valid 2FA token required')
 ], async (req, res) => {
     try {
         const errors = validationResult(req);
@@ -120,7 +131,20 @@ router.post('/login', [
             });
         }
 
-        const { email, password } = req.body;
+        const { email, password, twoFactorToken } = req.body;
+        const ipAddress = getClientIP(req);
+        const userAgent = req.headers['user-agent'];
+
+        // Check for suspicious activity
+        const suspiciousActivity = await securityService.checkSuspiciousActivity(email, ipAddress);
+        if (suspiciousActivity.suspicious) {
+            await securityService.trackLoginAttempt(email, ipAddress, userAgent, false);
+            return res.status(401).json({
+                success: false,
+                error: suspiciousActivity.reason,
+                requires2FA: suspiciousActivity.action === 'REQUIRE_2FA'
+            });
+        }
 
         // Get user
         const user = await database.get(
@@ -129,6 +153,7 @@ router.post('/login', [
         );
 
         if (!user) {
+            await securityService.trackLoginAttempt(email, ipAddress, userAgent, false);
             return res.status(401).json({
                 success: false,
                 error: 'Invalid email or password'
@@ -136,6 +161,7 @@ router.post('/login', [
         }
 
         if (!user.is_active) {
+            await securityService.trackLoginAttempt(email, ipAddress, userAgent, false);
             return res.status(401).json({
                 success: false,
                 error: 'Account is deactivated'
@@ -145,10 +171,36 @@ router.post('/login', [
         // Verify password
         const passwordMatch = await bcrypt.compare(password, user.password);
         if (!passwordMatch) {
+            await securityService.trackLoginAttempt(email, ipAddress, userAgent, false);
             return res.status(401).json({
                 success: false,
                 error: 'Invalid email or password'
             });
+        }
+
+        // Check if 2FA is required
+        const settings = await database.get(
+            'SELECT two_factor_enabled FROM user_settings WHERE user_id = ?',
+            [user.id]
+        );
+
+        if (settings?.two_factor_enabled) {
+            if (!twoFactorToken) {
+                return res.status(401).json({
+                    success: false,
+                    error: '2FA token required',
+                    requires2FA: true
+                });
+            }
+
+            const twoFactorValid = await securityService.verify2FAToken(user.id, twoFactorToken);
+            if (!twoFactorValid.success) {
+                await securityService.trackLoginAttempt(email, ipAddress, userAgent, false);
+                return res.status(401).json({
+                    success: false,
+                    error: 'Invalid 2FA token'
+                });
+            }
         }
 
         // Create session
@@ -160,6 +212,9 @@ router.post('/login', [
              VALUES (?, ?, ?, datetime('now', '+30 days'))`,
             [sessionId, user.id, token]
         );
+
+        // Track successful login
+        await securityService.trackLoginAttempt(email, ipAddress, userAgent, true);
 
         // Remove password from response
         delete user.password;

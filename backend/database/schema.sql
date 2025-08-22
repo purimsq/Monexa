@@ -194,6 +194,34 @@ CREATE TABLE IF NOT EXISTS password_resets (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Security logs table
+CREATE TABLE IF NOT EXISTS security_logs (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    event_type TEXT NOT NULL, -- LOGIN_SUCCESS, LOGIN_FAILED, 2FA_ENABLED, 2FA_DISABLED, PASSWORD_CHANGED, etc.
+    description TEXT NOT NULL,
+    ip_address TEXT,
+    user_agent TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Login attempts table
+CREATE TABLE IF NOT EXISTS login_attempts (
+    id TEXT PRIMARY KEY,
+    user_id TEXT,
+    email TEXT NOT NULL,
+    ip_address TEXT,
+    user_agent TEXT,
+    success BOOLEAN NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Add 2FA fields to user_settings table
+ALTER TABLE user_settings ADD COLUMN two_factor_secret TEXT;
+ALTER TABLE user_settings ADD COLUMN two_factor_enabled BOOLEAN DEFAULT 0;
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON user_sessions(user_id);
@@ -211,3 +239,9 @@ CREATE INDEX IF NOT EXISTS idx_user_settings_user_id ON user_settings(user_id);
 CREATE INDEX IF NOT EXISTS idx_export_requests_user_id ON export_requests(user_id);
 CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token);
 CREATE INDEX IF NOT EXISTS idx_password_resets_user_id ON password_resets(user_id);
+CREATE INDEX IF NOT EXISTS idx_security_logs_user_id ON security_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_security_logs_event_type ON security_logs(event_type);
+CREATE INDEX IF NOT EXISTS idx_security_logs_created_at ON security_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_email ON login_attempts(email);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_ip_address ON login_attempts(ip_address);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_created_at ON login_attempts(created_at);

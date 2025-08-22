@@ -425,6 +425,55 @@ class ApiService {
         return this.delete(`/goals/${goalId}`);
     }
 
+    // Security APIs
+    async generate2FASecret() {
+        return this.post('/security/2fa/generate');
+    }
+
+    async enable2FA(token) {
+        return this.post('/security/2fa/enable', { token });
+    }
+
+    async disable2FA(token) {
+        return this.post('/security/2fa/disable', { token });
+    }
+
+    async verify2FAToken(token) {
+        return this.post('/security/2fa/verify', { token });
+    }
+
+    async getSecurityLogs(limit = 50) {
+        return this.get(`/security/logs?limit=${limit}`);
+    }
+
+    async getLoginHistory(limit = 50) {
+        return this.get(`/security/login-history?limit=${limit}`);
+    }
+
+    async getSecuritySettings() {
+        return this.get('/security/settings');
+    }
+
+    async updateSecuritySettings(settings) {
+        return this.put('/security/settings', settings);
+    }
+
+    async validatePassword(password) {
+        return this.post('/security/validate-password', { password });
+    }
+
+    async getSessionInfo() {
+        return this.get('/security/session');
+    }
+
+    async revokeOtherSessions() {
+        return this.post('/security/revoke-other-sessions');
+    }
+
+    async getSecuritySummary() {
+        return this.get('/security/summary');
+    }
+
     // Health check
     async healthCheck() {
         return this.get('/health');

@@ -21,6 +21,7 @@ import { useAuth } from '../contexts/AuthContext';
 import apiService from '../services/api';
 import PasswordVerificationModal from '../components/PasswordVerificationModal';
 import PasswordChangeModal from '../components/PasswordChangeModal';
+import TwoFactorSetupModal from '../components/TwoFactorSetupModal';
 
 const Container = styled.div`
   max-width: 1800px;
@@ -492,6 +493,7 @@ const Settings = () => {
   // Modal state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
+  const [show2FAModal, setShow2FAModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState(null);
 
@@ -831,16 +833,16 @@ const Settings = () => {
           <SettingItem>
             <SettingInfo>
               <SettingLabel>Two-Factor Authentication</SettingLabel>
-              <SettingDescription>Add an extra layer of security</SettingDescription>
+              <SettingDescription>Add an extra layer of security with authenticator app</SettingDescription>
             </SettingInfo>
-            <ToggleSwitch>
-              <ToggleInput
-                type="checkbox"
-                checked={settings.twoFactorAuth}
-                onChange={(e) => handleSettingChange('twoFactorAuth', e.target.checked)}
-              />
-              <ToggleSlider />
-            </ToggleSwitch>
+            <Button
+              onClick={() => setShow2FAModal(true)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Shield size={16} />
+              {settings.twoFactorAuth ? 'Manage 2FA' : 'Enable 2FA'}
+            </Button>
           </SettingItem>
 
           <SettingItem>
@@ -1162,16 +1164,30 @@ const Settings = () => {
          error={modalError}
        />
 
-       {/* Password Change Modal */}
-       <PasswordChangeModal
-         isOpen={showPasswordChangeModal}
-         onClose={() => setShowPasswordChangeModal(false)}
-         onPasswordChange={handlePasswordChange}
-         loading={modalLoading}
-         error={modalError}
-       />
-     </Container>
-   );
- };
+               {/* Password Change Modal */}
+        <PasswordChangeModal
+          isOpen={showPasswordChangeModal}
+          onClose={() => setShowPasswordChangeModal(false)}
+          onPasswordChange={handlePasswordChange}
+          loading={modalLoading}
+          error={modalError}
+        />
+
+        {/* Two-Factor Authentication Modal */}
+        <TwoFactorSetupModal
+          isOpen={show2FAModal}
+          onClose={() => setShow2FAModal(false)}
+          current2FAStatus={settings.twoFactorAuth}
+          onStatusChange={(enabled) => {
+            setSettings(prev => ({ ...prev, twoFactorAuth: enabled }));
+            toast.success(
+              enabled ? 'Two-factor authentication enabled!' : 'Two-factor authentication disabled!',
+              { position: "bottom-right", autoClose: 3000 }
+            );
+          }}
+        />
+      </Container>
+    );
+  };
 
 export default Settings;
