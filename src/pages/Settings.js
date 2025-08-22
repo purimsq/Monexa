@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme, fonts } from '../contexts/ThemeContext';
 import apiService from '../services/api';
 import PasswordVerificationModal from '../components/PasswordVerificationModal';
 import PasswordChangeModal from '../components/PasswordChangeModal';
@@ -536,7 +536,7 @@ const ModalDescription = styled.p`
 const Settings = () => {
   const navigate = useNavigate();
   const { user, updateProfile } = useAuth();
-  const { theme, themeName, toggleTheme } = useTheme();
+  const { theme, themeName, toggleTheme, selectedFont, setSelectedFont } = useTheme();
   
   const [settings, setSettings] = useState({
     // Profile Settings
@@ -1186,17 +1186,71 @@ const Settings = () => {
 
           <SettingItem>
             <SettingInfo>
-              <SettingLabel>Compact Mode</SettingLabel>
-              <SettingDescription>Use compact layout</SettingDescription>
+              <SettingLabel>Font Family</SettingLabel>
+              <SettingDescription>Choose your preferred font style</SettingDescription>
             </SettingInfo>
-            <ToggleSwitch>
-              <ToggleInput
-                type="checkbox"
-                checked={settings.compactMode}
-                onChange={(e) => handleSettingChange('compactMode', e.target.checked)}
-              />
-              <ToggleSlider />
-            </ToggleSwitch>
+            <div style={{ width: '100%' }}>
+              <Select
+                value={selectedFont}
+                onChange={(e) => setSelectedFont(e.target.value)}
+                style={{ marginBottom: '12px' }}
+              >
+                <optgroup label="Professional Fonts">
+                  {Object.entries(fonts)
+                    .filter(([key, font]) => font.category === 'Professional')
+                    .map(([key, font]) => (
+                      <option key={key} value={key}>
+                        {font.name} - {font.description}
+                      </option>
+                    ))}
+                </optgroup>
+                <optgroup label="Fun & Curvy Fonts">
+                  {Object.entries(fonts)
+                    .filter(([key, font]) => font.category === 'Fun')
+                    .map(([key, font]) => (
+                      <option key={key} value={key}>
+                        {font.name} - {font.description}
+                      </option>
+                    ))}
+                </optgroup>
+              </Select>
+              <div style={{ 
+                padding: '16px', 
+                border: `1px solid ${theme.colors.borderPrimary}`, 
+                borderRadius: '12px',
+                backgroundColor: theme.colors.secondary,
+                fontSize: '14px',
+                lineHeight: '1.6'
+              }}>
+                <div style={{ 
+                  fontFamily: fonts[selectedFont].family,
+                  fontWeight: '600',
+                  fontSize: '16px',
+                  marginBottom: '8px',
+                  color: theme.colors.textPrimary
+                }}>
+                  Sample Heading
+                </div>
+                <div style={{ 
+                  fontFamily: fonts[selectedFont].family,
+                  color: theme.colors.textSecondary,
+                  marginBottom: '8px'
+                }}>
+                  This is how your text will look with {fonts[selectedFont].name}. {fonts[selectedFont].description}.
+                </div>
+                <div style={{ 
+                  fontFamily: fonts[selectedFont].family,
+                  fontSize: '12px',
+                  color: theme.colors.textTertiary,
+                  padding: '8px',
+                  backgroundColor: theme.colors.tertiary,
+                  borderRadius: '6px',
+                  border: `1px solid ${theme.colors.borderSecondary}`
+                }}>
+                  <strong>Category:</strong> {fonts[selectedFont].category}
+                </div>
+              </div>
+            </div>
           </SettingItem>
         </SettingsCard>
 

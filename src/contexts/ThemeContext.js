@@ -1,6 +1,61 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { createGlobalStyle } from 'styled-components';
 
+// Font definitions - 4 professional + 4 fun fonts
+export const fonts = {
+  // Professional Fonts
+  inter: {
+    name: 'Inter',
+    family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    category: 'Professional',
+    description: 'Clean and modern'
+  },
+  roboto: {
+    name: 'Roboto',
+    family: "'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    category: 'Professional',
+    description: 'Google\'s trusted font'
+  },
+  openSans: {
+    name: 'Open Sans',
+    family: "'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    category: 'Professional',
+    description: 'Highly legible and clean'
+  },
+  sourceSans: {
+    name: 'Source Sans Pro',
+    family: "'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    category: 'Professional',
+    description: 'Clean and corporate'
+  },
+  
+  // Fun & Curvy Fonts
+  nunito: {
+    name: 'Nunito',
+    family: "'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    category: 'Fun',
+    description: 'Rounded and friendly'
+  },
+  comfortaa: {
+    name: 'Comfortaa',
+    family: "'Comfortaa', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    category: 'Fun',
+    description: 'Bubble-like and playful'
+  },
+  quicksand: {
+    name: 'Quicksand',
+    family: "'Quicksand', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    category: 'Fun',
+    description: 'Smooth and curvy'
+  },
+  fredoka: {
+    name: 'Fredoka',
+    family: "'Fredoka', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    category: 'Fun',
+    description: 'Bouncy and cheerful'
+  }
+};
+
 // Theme definitions
 const lightTheme = {
   name: 'light',
@@ -134,7 +189,7 @@ const GlobalStyle = createGlobalStyle`
     color: ${props => props.theme.colors.textPrimary};
     transition: background-color ${props => props.theme.transitions.slow}, 
                 color ${props => props.theme.transitions.slow};
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: ${props => props.fontFamily};
   }
   
   /* Smooth theme transition overlay */
@@ -168,18 +223,26 @@ export const useTheme = () => {
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState('light');
+  const [selectedFont, setSelectedFont] = useState('inter');
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  // Load theme from localStorage on mount
+  // Load theme and font from localStorage on mount
   useEffect(() => {
     const savedTheme = localStorage.getItem('monexa-theme') || 'light';
+    const savedFont = localStorage.getItem('monexa-font') || 'inter';
     setTheme(savedTheme);
+    setSelectedFont(savedFont);
   }, []);
 
   // Save theme to localStorage when it changes
   useEffect(() => {
     localStorage.setItem('monexa-theme', theme);
   }, [theme]);
+
+  // Save font to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('monexa-font', selectedFont);
+  }, [selectedFont]);
 
   const toggleTheme = async () => {
     setIsTransitioning(true);
@@ -210,15 +273,19 @@ export const ThemeProvider = ({ children }) => {
   };
 
   const currentTheme = theme === 'dark' ? darkTheme : lightTheme;
+  const currentFont = fonts[selectedFont];
 
   return (
     <ThemeContext.Provider value={{ 
       theme: currentTheme, 
       themeName: theme, 
+      selectedFont,
+      currentFont,
+      setSelectedFont,
       toggleTheme, 
       isTransitioning 
     }}>
-      <GlobalStyle theme={currentTheme} />
+      <GlobalStyle theme={currentTheme} fontFamily={currentFont.family} />
       {children}
     </ThemeContext.Provider>
   );
