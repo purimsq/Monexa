@@ -3,6 +3,11 @@ const bcrypt = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
 const database = require('../config/database');
 const { verifyToken } = require('../middleware/auth');
+const PDFDocument = require('pdfkit');
+const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+const nodemailer = require('nodemailer');
+const fs = require('fs');
+const path = require('path');
 
 const router = express.Router();
 
@@ -397,6 +402,320 @@ router.delete('/account', verifyToken, [
         res.status(500).json({
             success: false,
             error: 'Failed to deactivate account'
+        });
+    }
+});
+
+// Export user data
+router.post('/export-data', verifyToken, async (req, res) => {
+    try {
+        // Get user data
+        const user = await database.get(
+            'SELECT * FROM users WHERE id = ?',
+            [req.user.id]
+        );
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        // Get user settings
+        const userSettings = await database.get(
+            'SELECT * FROM user_settings WHERE user_id = ?',
+            [req.user.id]
+        );
+
+        // Get user sessions
+        const userSessions = await database.all(
+            'SELECT * FROM user_sessions WHERE user_id = ? ORDER BY created_at DESC',
+            [req.user.id]
+        );
+
+        // Get transactions (if table exists)
+        let transactions = [];
+        try {
+            transactions = await database.all(
+                'SELECT * FROM transactions WHERE user_id = ? ORDER BY created_at DESC',
+                [req.user.id]
+            );
+        } catch (error) {
+            // Transactions table might not exist yet
+            console.log('Transactions table not found, skipping...');
+        }
+
+        // Get notifications (if table exists)
+        let notifications = [];
+        try {
+            notifications = await database.all(
+                'SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC',
+                [req.user.id]
+            );
+        } catch (error) {
+            // Notifications table might not exist yet
+            console.log('Notifications table not found, skipping...');
+        }
+
+        // Prepare data for export
+        const exportData = {
+            profile: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                location: user.location,
+                experience: user.experience,
+                bio: user.bio,
+                role: user.role,
+                avatar: user.avatar,
+                created_at: user.created_at,
+                updated_at: user.updated_at
+            },
+            settings: userSettings || {},
+            sessions: userSessions,
+            transactions: transactions,
+            notifications: notifications,
+            export_date: new Date().toISOString()
+        };
+
+        // Create exports directory if it doesn't exist
+        const exportsDir = path.join(__dirname, '../exports');
+        if (!fs.existsSync(exportsDir)) {
+            fs.mkdirSync(exportsDir, { recursive: true });
+        }
+
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const baseFileName = `monexa_export_${user.id}_${timestamp}`;
+
+        // Generate CSV file
+        const csvPath = path.join(exportsDir, `${baseFileName}.csv`);
+        const csvWriter = createCsvWriter({
+            path: csvPath,
+            header: [
+                { id: 'section', title: 'SECTION' },
+                { id: 'field', title: 'FIELD' },
+                { id: 'value', title: 'VALUE' }
+            ]
+        });
+
+        const csvRecords = [];
+        
+        // Add profile data
+        Object.entries(exportData.profile).forEach(([key, value]) => {
+            csvRecords.push({
+                section: 'PROFILE',
+                field: key.toUpperCase(),
+                value: value || ''
+            });
+        });
+
+        // Add settings data
+        if (exportData.settings) {
+            Object.entries(exportData.settings).forEach(([key, value]) => {
+                if (key !== 'id' && key !== 'user_id') {
+                    csvRecords.push({
+                        section: 'SETTINGS',
+                        field: key.toUpperCase(),
+                        value: value || ''
+                    });
+                }
+            });
+        }
+
+        // Add sessions data
+        exportData.sessions.forEach((session, index) => {
+            csvRecords.push({
+                section: 'SESSIONS',
+                field: `SESSION_${index + 1}_IP`,
+                value: session.ip_address || ''
+            });
+            csvRecords.push({
+                section: 'SESSIONS',
+                field: `SESSION_${index + 1}_CREATED`,
+                value: session.created_at || ''
+            });
+            csvRecords.push({
+                section: 'SESSIONS',
+                field: `SESSION_${index + 1}_EXPIRES`,
+                value: session.expires_at || ''
+            });
+        });
+
+        // Add transactions data
+        exportData.transactions.forEach((transaction, index) => {
+            csvRecords.push({
+                section: 'TRANSACTIONS',
+                field: `TRANSACTION_${index + 1}_TYPE`,
+                value: transaction.type || ''
+            });
+            csvRecords.push({
+                section: 'TRANSACTIONS',
+                field: `TRANSACTION_${index + 1}_AMOUNT`,
+                value: transaction.amount || ''
+            });
+            csvRecords.push({
+                section: 'TRANSACTIONS',
+                field: `TRANSACTION_${index + 1}_STATUS`,
+                value: transaction.status || ''
+            });
+            csvRecords.push({
+                section: 'TRANSACTIONS',
+                field: `TRANSACTION_${index + 1}_CREATED`,
+                value: transaction.created_at || ''
+            });
+        });
+
+        await csvWriter.writeRecords(csvRecords);
+
+        // Generate PDF file
+        const pdfPath = path.join(exportsDir, `${baseFileName}.pdf`);
+        const doc = new PDFDocument();
+
+        const writeStream = fs.createWriteStream(pdfPath);
+        doc.pipe(writeStream);
+
+        // PDF Header
+        doc.fontSize(24).text('Monexa Data Export', { align: 'center' });
+        doc.moveDown();
+        doc.fontSize(12).text(`Generated on: ${new Date().toLocaleString()}`, { align: 'center' });
+        doc.moveDown(2);
+
+        // Profile Section
+        doc.fontSize(18).text('PROFILE INFORMATION', { underline: true });
+        doc.moveDown();
+        doc.fontSize(12);
+        doc.text(`Name: ${exportData.profile.name || 'N/A'}`);
+        doc.text(`Email: ${exportData.profile.email || 'N/A'}`);
+        doc.text(`Phone: ${exportData.profile.phone || 'N/A'}`);
+        doc.text(`Location: ${exportData.profile.location || 'N/A'}`);
+        doc.text(`Role: ${exportData.profile.role || 'N/A'}`);
+        doc.text(`Experience: ${exportData.profile.experience || 'N/A'}`);
+        doc.text(`Bio: ${exportData.profile.bio || 'N/A'}`);
+        doc.text(`Member Since: ${new Date(exportData.profile.created_at).toLocaleDateString()}`);
+        doc.moveDown(2);
+
+        // Settings Section
+        if (exportData.settings) {
+            doc.fontSize(18).text('ACCOUNT SETTINGS', { underline: true });
+            doc.moveDown();
+            doc.fontSize(12);
+            doc.text(`Email Notifications: ${exportData.settings.email_notifications ? 'Enabled' : 'Disabled'}`);
+            doc.text(`Push Notifications: ${exportData.settings.push_notifications ? 'Enabled' : 'Disabled'}`);
+            doc.text(`Default Currency: ${exportData.settings.default_currency || 'USD'}`);
+            doc.text(`Theme: ${exportData.settings.theme || 'light'}`);
+            doc.text(`Profile Visibility: ${exportData.settings.profile_visibility || 'public'}`);
+            doc.moveDown(2);
+        }
+
+        // Sessions Section
+        doc.fontSize(18).text('ACTIVE SESSIONS', { underline: true });
+        doc.moveDown();
+        doc.fontSize(12);
+        exportData.sessions.forEach((session, index) => {
+            doc.text(`Session ${index + 1}:`);
+            doc.text(`  IP Address: ${session.ip_address || 'N/A'}`);
+            doc.text(`  Created: ${new Date(session.created_at).toLocaleString()}`);
+            doc.text(`  Expires: ${new Date(session.expires_at).toLocaleString()}`);
+            doc.moveDown();
+        });
+
+        // Transactions Section
+        if (exportData.transactions.length > 0) {
+            doc.fontSize(18).text('TRANSACTION HISTORY', { underline: true });
+            doc.moveDown();
+            doc.fontSize(12);
+            exportData.transactions.forEach((transaction, index) => {
+                doc.text(`Transaction ${index + 1}:`);
+                doc.text(`  Type: ${transaction.type || 'N/A'}`);
+                doc.text(`  Amount: ${transaction.amount || 'N/A'}`);
+                doc.text(`  Status: ${transaction.status || 'N/A'}`);
+                doc.text(`  Date: ${new Date(transaction.created_at).toLocaleString()}`);
+                doc.moveDown();
+            });
+        }
+
+        doc.end();
+
+        // Wait for PDF to be written
+        await new Promise((resolve, reject) => {
+            writeStream.on('finish', resolve);
+            writeStream.on('error', reject);
+        });
+
+        // Send email with attachments
+        const transporter = nodemailer.createTransporter({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER || 'your-email@gmail.com',
+                pass: process.env.EMAIL_PASS || 'your-app-password'
+            }
+        });
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER || 'your-email@gmail.com',
+            to: user.email,
+            subject: 'Monexa - Your Data Export',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #1a1a1a;">Monexa Data Export</h2>
+                    <p>Hello ${user.name},</p>
+                    <p>Your data export has been completed successfully. Please find your data attached in both CSV and PDF formats.</p>
+                    
+                    <h3 style="color: #333;">What's included in your export:</h3>
+                    <ul>
+                        <li><strong>Profile Information:</strong> Your personal details and account information</li>
+                        <li><strong>Account Settings:</strong> Your preferences and configuration</li>
+                        <li><strong>Active Sessions:</strong> Your logged-in devices and sessions</li>
+                        <li><strong>Transaction History:</strong> Your payment and sales records</li>
+                        <li><strong>Notifications:</strong> Your notification history</li>
+                    </ul>
+                    
+                    <p><strong>Export Date:</strong> ${new Date().toLocaleString()}</p>
+                    
+                    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                        <p style="margin: 0; color: #666;">
+                            <strong>Note:</strong> This export contains your personal data. Please keep it secure and delete it when no longer needed.
+                        </p>
+                    </div>
+                    
+                    <p>If you have any questions about your data export, please contact our support team.</p>
+                    
+                    <p>Best regards,<br>The Monexa Team</p>
+                </div>
+            `,
+            attachments: [
+                {
+                    filename: `${baseFileName}.csv`,
+                    path: csvPath
+                },
+                {
+                    filename: `${baseFileName}.pdf`,
+                    path: pdfPath
+                }
+            ]
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        // Clean up files after sending
+        setTimeout(() => {
+            if (fs.existsSync(csvPath)) fs.unlinkSync(csvPath);
+            if (fs.existsSync(pdfPath)) fs.unlinkSync(pdfPath);
+        }, 60000); // Delete after 1 minute
+
+        res.json({
+            success: true,
+            message: 'Data export completed successfully. Check your email for the exported files.',
+            email: user.email
+        });
+
+    } catch (error) {
+        console.error('Export data error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to export data. Please try again later.'
         });
     }
 });

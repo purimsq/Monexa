@@ -490,6 +490,11 @@ class ApiService {
         return this.get('/security/summary');
     }
 
+    // Data Export API
+    async exportData() {
+        return this.post('/users/export-data');
+    }
+
     // Health check
     async healthCheck() {
         return this.get('/health');

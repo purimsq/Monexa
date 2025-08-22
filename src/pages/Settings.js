@@ -876,11 +876,36 @@ const Settings = () => {
     }
   };
 
-  const handleExportData = () => {
-    toast.info('Data export feature coming soon!', {
-      position: "bottom-right",
-      autoClose: 3000,
-    });
+  const handleExportData = async () => {
+    try {
+      // Show loading toast
+      const loadingToast = toast.loading('Preparing your data export...', {
+        position: "bottom-right",
+      });
+
+      const result = await apiService.exportData();
+      
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+
+      if (result.success) {
+        toast.success(`Data export completed! Check your email (${result.email}) for the exported files.`, {
+          position: "bottom-right",
+          autoClose: 5000,
+        });
+      } else {
+        toast.error(result.error || 'Failed to export data', {
+          position: "bottom-right",
+          autoClose: 3000,
+        });
+      }
+    } catch (error) {
+      console.error('Export data error:', error);
+      toast.error('Failed to export data. Please try again later.', {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
+    }
   };
 
   const handleDeleteAccount = () => {
