@@ -42,6 +42,10 @@ class ApiService {
             const data = await response.json();
 
             if (!response.ok) {
+                // Special handling for 2FA required response
+                if (response.status === 401 && data.requires2FA) {
+                    return data; // Return the data instead of throwing error
+                }
                 throw new Error(data.error || `HTTP error! status: ${response.status}`);
             }
 
