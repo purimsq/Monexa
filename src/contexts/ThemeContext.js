@@ -459,6 +459,62 @@ const createDarkTheme = (accentTheme) => ({
   }
 });
 
+const createGlassmorphismTheme = (accentTheme) => ({
+  name: 'glassmorphism',
+  colors: {
+    // Inspired by the frosted headphones image - icy blues, whites, with warm orange accents
+    primary: 'rgba(255, 255, 255, 0.1)',
+    secondary: 'rgba(240, 248, 255, 0.15)',
+    tertiary: 'rgba(230, 240, 250, 0.2)',
+    background: 'url("/images/morphism.png") center/cover no-repeat fixed',
+    textPrimary: '#1a237e',
+    textSecondary: '#283593',
+    textTertiary: '#3949ab',
+    borderPrimary: 'rgba(156, 204, 101, 0.3)',
+    borderSecondary: 'rgba(156, 204, 101, 0.2)',
+    card: 'rgba(255, 255, 255, 0.25)',
+    cardHover: 'rgba(255, 255, 255, 0.35)',
+    input: 'rgba(255, 255, 255, 0.2)',
+    inputBorder: 'rgba(156, 204, 101, 0.4)',
+    inputFocus: 'rgba(255, 255, 255, 0.3)',
+    inputFocusBorder: '#4caf50',
+    buttonPrimary: '#4caf50',
+    buttonSecondary: 'rgba(255, 255, 255, 0.2)',
+    buttonText: '#ffffff',
+    buttonTextSecondary: '#1a237e',
+    accent: '#4caf50',
+    accentHover: '#66bb6a',
+    
+    // Status colors - Vibrant and clear for glassmorphism
+    success: '#4caf50',
+    warning: '#ff9800',
+    error: '#f44336',
+    info: '#2196f3',
+    
+    // Shadow colors - Subtle glass shadows
+    shadow: 'rgba(31, 38, 135, 0.15)',
+    shadowHover: 'rgba(31, 38, 135, 0.25)',
+    
+    // Glassmorphism specific properties
+    glassEffect: 'backdrop-filter: blur(20px) saturate(180%);',
+    glassBorder: '1px solid rgba(255, 255, 255, 0.3)',
+    glassShadow: '0 8px 32px rgba(31, 38, 135, 0.37)',
+    frostEffect: 'backdrop-filter: blur(10px) saturate(150%);',
+    frostBorder: '1px solid rgba(255, 255, 255, 0.2)',
+    frostShadow: '0 4px 16px rgba(31, 38, 135, 0.25)'
+  },
+  shadows: {
+    small: '0 4px 16px rgba(31, 38, 135, 0.25)',
+    medium: '0 8px 32px rgba(31, 38, 135, 0.37)',
+    large: '0 20px 60px rgba(31, 38, 135, 0.45)',
+  },
+  transitions: {
+    fast: '0.2s ease',
+    medium: '0.3s ease',
+    slow: '0.5s ease',
+  }
+});
+
 // Global styles for theme transitions
 const GlobalStyle = createGlobalStyle`
   * {
@@ -476,6 +532,21 @@ const GlobalStyle = createGlobalStyle`
     font-family: ${props => props.fontFamily};
   }
   
+  /* Glassmorphism specific styles */
+  .glassmorphism-card {
+    background: ${props => props.theme.name === 'glassmorphism' ? props.theme.colors.card : 'transparent'};
+    backdrop-filter: ${props => props.theme.name === 'glassmorphism' ? 'blur(20px) saturate(180%)' : 'none'};
+    border: ${props => props.theme.name === 'glassmorphism' ? props.theme.colors.glassBorder : 'none'};
+    box-shadow: ${props => props.theme.name === 'glassmorphism' ? props.theme.colors.glassShadow : 'none'};
+  }
+  
+  .glassmorphism-frost {
+    background: ${props => props.theme.name === 'glassmorphism' ? props.theme.colors.card : 'transparent'};
+    backdrop-filter: ${props => props.theme.name === 'glassmorphism' ? 'blur(10px) saturate(150%)' : 'none'};
+    border: ${props => props.theme.name === 'glassmorphism' ? props.theme.colors.frostBorder : 'none'};
+    box-shadow: ${props => props.theme.name === 'glassmorphism' ? props.theme.colors.frostShadow : 'none'};
+  }
+  
   /* Smooth theme transition overlay */
   .theme-transition-overlay {
     position: fixed;
@@ -483,7 +554,9 @@ const GlobalStyle = createGlobalStyle`
     left: 0;
     right: 0;
     bottom: 0;
-    background: ${props => props.theme.name === 'dark' ? '#0f172a' : '#ffffff'};
+    background: ${props => props.theme.name === 'dark' ? '#0f172a' : 
+                  props.theme.name === 'glassmorphism' ? 'url("/images/morphism.png") center/cover no-repeat fixed' : 
+                  '#ffffff'};
     z-index: 9999;
     pointer-events: none;
     opacity: 0;
@@ -551,7 +624,11 @@ export const ThemeProvider = ({ children }) => {
     
     // Change theme after a brief delay
     setTimeout(() => {
-      setTheme(prev => prev === 'light' ? 'dark' : 'light');
+      setTheme(prev => {
+        if (prev === 'light') return 'dark';
+        if (prev === 'dark') return 'glassmorphism';
+        return 'light';
+      });
       
       // Remove overlay after theme change
       setTimeout(() => {
@@ -565,7 +642,9 @@ export const ThemeProvider = ({ children }) => {
   };
 
   const currentAccent = accentThemes[selectedAccent];
-  const currentTheme = theme === 'dark' ? createDarkTheme(currentAccent) : createLightTheme(currentAccent);
+  const currentTheme = theme === 'dark' ? createDarkTheme(currentAccent) : 
+                      theme === 'glassmorphism' ? createGlassmorphismTheme(currentAccent) : 
+                      createLightTheme(currentAccent);
   const currentFont = fonts[selectedFont];
 
   return (

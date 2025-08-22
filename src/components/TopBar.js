@@ -8,13 +8,19 @@ import { useTheme } from '../contexts/ThemeContext';
 import { toast } from 'react-toastify';
 
 const TopBarContainer = styled.div`
-  background: ${props => props.theme.colors.card};
+  background: ${props => props.theme.colors.background || props.theme.colors.card};
   border-bottom: 1px solid ${props => props.theme.colors.borderPrimary};
   padding: 16px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   box-shadow: ${props => props.theme.shadows.small};
+  ${props => props.theme.name === 'glassmorphism' && `
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 16px rgba(31, 38, 135, 0.25);
+  `}
 `;
 
 const LeftSection = styled.div`

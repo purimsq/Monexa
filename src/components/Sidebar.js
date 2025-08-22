@@ -17,7 +17,7 @@ import {
 
 const SidebarContainer = styled(motion.div)`
   width: 280px;
-  background: ${props => props.theme.colors.card};
+  background: ${props => props.theme.colors.background || props.theme.colors.card};
   color: ${props => props.theme.colors.textPrimary};
   padding: 24px 0;
   display: flex;
@@ -29,6 +29,12 @@ const SidebarContainer = styled(motion.div)`
   left: 0;
   top: 0;
   z-index: 1000;
+  ${props => props.theme.name === 'glassmorphism' && `
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  `}
 `;
 
 const LogoSection = styled.div`

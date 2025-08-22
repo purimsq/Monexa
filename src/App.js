@@ -34,6 +34,9 @@ const AppContainer = styled.div`
   height: 100vh;
   background-color: ${props => props.theme.colors.background || props.theme.colors.primary};
   font-family: 'Inter', sans-serif;
+  ${props => props.theme.name === 'glassmorphism' && `
+    background: url("/images/morphism.png") center/cover no-repeat fixed;
+  `}
 `;
 
 const MainContent = styled.div`
@@ -51,6 +54,9 @@ const ContentArea = styled.div`
   background-color: ${props => props.theme.colors.background || props.theme.colors.primary};
   display: flex;
   gap: 24px;
+  ${props => props.theme.name === 'glassmorphism' && `
+    background: transparent;
+  `}
 `;
 
 const MainColumn = styled.div`

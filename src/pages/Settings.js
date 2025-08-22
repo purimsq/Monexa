@@ -124,6 +124,23 @@ const SettingsCard = styled(motion.div)`
       animation: shimmer 2s infinite;
     }
   }
+  
+  ${props => props.theme.name === 'glassmorphism' && `
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.35);
+      box-shadow: 0 12px 40px rgba(31, 38, 135, 0.45);
+      transform: translateY(-4px);
+    }
+    
+    &::before {
+      background: linear-gradient(135deg, #4caf50, #66bb6a);
+    }
+  `}
 `;
 
 const CardHeader = styled.div`
@@ -1170,15 +1187,18 @@ const Settings = () => {
               value={themeName}
               onChange={(e) => {
                 const newTheme = e.target.value;
-                if (newTheme === 'dark') {
+                if (newTheme === 'dark' && themeName !== 'dark') {
                   toggleTheme();
-                } else if (newTheme === 'light' && themeName === 'dark') {
+                } else if (newTheme === 'light' && themeName !== 'light') {
+                  toggleTheme();
+                } else if (newTheme === 'glassmorphism' && themeName !== 'glassmorphism') {
                   toggleTheme();
                 }
               }}
             >
               <option value="light">Light</option>
               <option value="dark">Dark</option>
+              <option value="glassmorphism">Glassmorphism</option>
             </Select>
           </SettingItem>
 
