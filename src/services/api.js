@@ -495,6 +495,11 @@ class ApiService {
         return this.post('/users/export-data', { password });
     }
 
+    // Account Management APIs
+    async deleteAccount() {
+        return this.delete('/users/account');
+    }
+
     // Health check
     async healthCheck() {
         return this.get('/health');

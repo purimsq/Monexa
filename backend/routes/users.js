@@ -349,7 +349,7 @@ router.put('/settings', verifyToken, async (req, res) => {
     }
 });
 
-// Deactivate account
+// Delete account completely
 router.delete('/account', verifyToken, [
     body('password').exists().withMessage('Password required for account deletion')
 ], async (req, res) => {
@@ -380,28 +380,87 @@ router.delete('/account', verifyToken, [
             });
         }
 
-        // Deactivate account (don't delete, just mark as inactive)
-        await database.run(
-            'UPDATE users SET is_active = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-            [req.user.id]
-        );
+        // Begin transaction for complete account deletion
+        await database.run('BEGIN TRANSACTION');
 
-        // Delete all user sessions
-        await database.run(
-            'DELETE FROM user_sessions WHERE user_id = ?',
-            [req.user.id]
-        );
+        try {
+            // Delete all user sessions
+            await database.run(
+                'DELETE FROM user_sessions WHERE user_id = ?',
+                [req.user.id]
+            );
 
-        res.json({
-            success: true,
-            message: 'Account deactivated successfully'
-        });
+            // Delete user settings
+            await database.run(
+                'DELETE FROM user_settings WHERE user_id = ?',
+                [req.user.id]
+            );
+
+            // Delete user transactions (if table exists)
+            try {
+                await database.run(
+                    'DELETE FROM transactions WHERE user_id = ?',
+                    [req.user.id]
+                );
+            } catch (error) {
+                console.log('Transactions table not found, skipping...');
+            }
+
+            // Delete user notifications (if table exists)
+            try {
+                await database.run(
+                    'DELETE FROM notifications WHERE user_id = ?',
+                    [req.user.id]
+                );
+            } catch (error) {
+                console.log('Notifications table not found, skipping...');
+            }
+
+            // Delete user payments (if table exists)
+            try {
+                await database.run(
+                    'DELETE FROM payments WHERE user_id = ?',
+                    [req.user.id]
+                );
+            } catch (error) {
+                console.log('Payments table not found, skipping...');
+            }
+
+            // Delete user sales (if table exists)
+            try {
+                await database.run(
+                    'DELETE FROM sales WHERE user_id = ?',
+                    [req.user.id]
+                );
+            } catch (error) {
+                console.log('Sales table not found, skipping...');
+            }
+
+            // Finally, delete the user account
+            await database.run(
+                'DELETE FROM users WHERE id = ?',
+                [req.user.id]
+            );
+
+            // Commit the transaction
+            await database.run('COMMIT');
+
+            res.json({
+                success: true,
+                message: 'Account and all associated data deleted successfully'
+            });
+
+        } catch (error) {
+            // Rollback on error
+            await database.run('ROLLBACK');
+            throw error;
+        }
 
     } catch (error) {
-        console.error('Deactivate account error:', error);
+        console.error('Delete account error:', error);
         res.status(500).json({
             success: false,
-            error: 'Failed to deactivate account'
+            error: 'Failed to delete account. Please try again later.'
         });
     }
 });

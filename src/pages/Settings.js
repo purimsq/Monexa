@@ -15,7 +15,8 @@ import {
   Save,
   X,
   Key,
-  Monitor
+  Monitor,
+  AlertTriangle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -700,6 +701,8 @@ const Settings = () => {
   const [show2FAModal, setShow2FAModal] = useState(false);
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [showExportPasswordModal, setShowExportPasswordModal] = useState(false);
+  const [showDeletePasswordModal, setShowDeletePasswordModal] = useState(false);
+  const [showDeleteConfirmationModal, setShowDeleteConfirmationModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState(null);
 
@@ -914,10 +917,62 @@ const Settings = () => {
   };
 
   const handleDeleteAccount = () => {
-    toast.error('Account deletion feature coming soon!', {
-      position: "bottom-right",
-      autoClose: 3000,
-    });
+    setShowDeletePasswordModal(true);
+  };
+
+  const handleDeletePasswordVerification = async (password) => {
+    try {
+      setModalLoading(true);
+      setModalError(null);
+
+      // Verify password first
+      const verifyResult = await apiService.verifyPassword(password);
+      
+      if (verifyResult.success) {
+        // Password is correct, show final confirmation
+        setShowDeletePasswordModal(false);
+        setShowDeleteConfirmationModal(true);
+      } else {
+        setModalError('Password is incorrect. Please try again.');
+      }
+    } catch (error) {
+      console.error('Password verification error:', error);
+      setModalError('Failed to verify password. Please try again.');
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleDeleteAccountConfirmation = async () => {
+    try {
+      setModalLoading(true);
+      setModalError(null);
+
+      const result = await apiService.deleteAccount();
+      
+      if (result.success) {
+        toast.success('Account deleted successfully. You will be logged out.', {
+          position: "bottom-right",
+          autoClose: 3000,
+        });
+        
+        // Clear local storage and redirect to login
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        
+        // Redirect to login page after a short delay
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
+      } else {
+        setModalError(result.error || 'Failed to delete account. Please try again.');
+      }
+    } catch (error) {
+      console.error('Delete account error:', error);
+      setModalError('Failed to delete account. Please try again later.');
+    } finally {
+      setModalLoading(false);
+    }
   };
 
   // Remove the old accentColors array since we're using accentThemes now
@@ -1542,6 +1597,27 @@ const Settings = () => {
          error={modalError}
        />
 
+       {/* Delete Account Password Modal */}
+       <PasswordVerificationModal
+         isOpen={showDeletePasswordModal}
+         onClose={() => setShowDeletePasswordModal(false)}
+         onVerify={handleDeletePasswordVerification}
+         title="Delete Account"
+         description="Enter your password to proceed with account deletion"
+         loading={modalLoading}
+         error={modalError}
+       />
+
+       {/* Delete Account Confirmation Modal */}
+       <DeleteConfirmationModal
+         isOpen={showDeleteConfirmationModal}
+         onClose={() => setShowDeleteConfirmationModal(false)}
+         onConfirm={handleDeleteAccountConfirmation}
+         loading={modalLoading}
+         error={modalError}
+         theme={theme}
+       />
+
                {/* Password Change Modal */}
         <PasswordChangeModal
           isOpen={showPasswordChangeModal}
@@ -1574,6 +1650,101 @@ const Settings = () => {
       </Container>
     );
   };
+
+// Delete Confirmation Modal Component
+const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, loading, error, theme }) => {
+  if (!isOpen) return null;
+
+  return (
+    <ModalOverlay
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <ModalContent
+        theme={theme}
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <ModalHeader theme={theme}>
+          <ModalIcon theme={theme} style={{ backgroundColor: '#fee2e2' }}>
+            <AlertTriangle size={24} color="#dc2626" />
+          </ModalIcon>
+          <div>
+            <ModalTitle theme={theme}>Final Confirmation</ModalTitle>
+            <ModalDescription theme={theme}>
+              This action cannot be undone. All your data will be permanently deleted.
+            </ModalDescription>
+          </div>
+        </ModalHeader>
+
+        <div style={{ padding: '24px' }}>
+          <div style={{ 
+            backgroundColor: '#fef2f2', 
+            border: '1px solid #fecaca',
+            borderRadius: '12px',
+            padding: '16px',
+            marginBottom: '24px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <AlertTriangle size={16} color="#dc2626" />
+              <div style={{ fontWeight: '600', color: '#991b1b' }}>Warning: Permanent Deletion</div>
+            </div>
+            <div style={{ fontSize: '14px', color: '#991b1b', lineHeight: '1.5' }}>
+              <strong>This will permanently delete:</strong>
+              <ul style={{ margin: '8px 0 0 20px', padding: 0 }}>
+                <li>Your account and profile information</li>
+                <li>All your settings and preferences</li>
+                <li>Your transaction history</li>
+                <li>All your sessions and login data</li>
+                <li>Any saved payment methods</li>
+                <li>All associated data and records</li>
+              </ul>
+            </div>
+          </div>
+
+          {error && (
+            <div style={{ 
+              backgroundColor: '#fef2f2', 
+              border: '1px solid #fecaca',
+              borderRadius: '8px',
+              padding: '12px',
+              marginBottom: '16px',
+              color: '#dc2626',
+              fontSize: '14px'
+            }}>
+              {error}
+            </div>
+          )}
+
+          <ButtonGroup>
+            <Button
+              className="secondary"
+              onClick={onClose}
+              disabled={loading}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="danger"
+              onClick={onConfirm}
+              disabled={loading}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {loading ? 'Deleting Account...' : 'Yes, Delete My Account'}
+            </Button>
+          </ButtonGroup>
+        </div>
+      </ModalContent>
+    </ModalOverlay>
+  );
+};
 
 // Session Management Modal Component
 const SessionManagementModal = ({ isOpen, onClose, theme }) => {
