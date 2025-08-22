@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { Lock, Eye, EyeOff, Shield, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 const LockOverlay = styled(motion.div)`
   position: fixed;
@@ -20,13 +21,15 @@ const LockOverlay = styled(motion.div)`
 `;
 
 const LockCard = styled(motion.div)`
-  background: white;
+  background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.25)' : 'white'};
+  backdrop-filter: ${props => props.theme?.name === 'glassmorphism' ? 'blur(20px) saturate(180%)' : 'none'};
+  border: ${props => props.theme?.name === 'glassmorphism' ? '1px solid rgba(255, 255, 255, 0.3)' : 'none'};
   border-radius: 20px;
   padding: 40px;
   max-width: 400px;
   width: 100%;
   text-align: center;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: ${props => props.theme?.name === 'glassmorphism' ? '0 8px 32px rgba(31, 38, 135, 0.37)' : '0 20px 60px rgba(0, 0, 0, 0.3)'};
   position: relative;
   overflow: hidden;
 
@@ -37,7 +40,7 @@ const LockCard = styled(motion.div)`
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(135deg, #ef4444, #f59e0b);
+    background: linear-gradient(135deg, ${props => props.theme?.name === 'glassmorphism' ? '#4caf50' : '#ef4444'}, ${props => props.theme?.name === 'glassmorphism' ? '#66bb6a' : '#f59e0b'});
   }
 `;
 
@@ -58,13 +61,13 @@ const LockIcon = styled.div`
 const Title = styled.h2`
   font-size: 24px;
   font-weight: 700;
-  color: #1e293b;
+  color: ${props => props.theme?.name === 'glassmorphism' ? '#1a237e' : '#1e293b'};
   margin: 0 0 8px 0;
 `;
 
 const Description = styled.p`
   font-size: 14px;
-  color: #64748b;
+  color: ${props => props.theme?.name === 'glassmorphism' ? '#283593' : '#64748b'};
   margin: 0 0 32px 0;
   line-height: 1.5;
 `;
@@ -82,17 +85,18 @@ const InputGroup = styled.div`
 const Input = styled.input`
   width: 100%;
   padding: 14px 18px;
-  border: 2px solid #e2e8f0;
+  border: 2px solid ${props => props.theme?.name === 'glassmorphism' ? 'rgba(156, 204, 101, 0.4)' : '#e2e8f0'};
   border-radius: 10px;
   font-size: 14px;
-  color: #1e293b;
-  background: white;
+  color: ${props => props.theme?.name === 'glassmorphism' ? '#1a237e' : '#1e293b'};
+  background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.2)' : 'white'};
   transition: all 0.2s ease;
 
   &:focus {
     outline: none;
-    border-color: #1a1a1a;
-    box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.1);
+    border-color: ${props => props.theme?.name === 'glassmorphism' ? '#4caf50' : '#1a1a1a'};
+    box-shadow: 0 0 0 3px ${props => props.theme?.name === 'glassmorphism' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(26, 26, 26, 0.1)'};
+    background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.3)' : 'white'};
   }
 
   &.error {
@@ -176,6 +180,7 @@ const SecurityNoticeText = styled.div`
 `;
 
 const SessionLockScreen = () => {
+  const { theme } = useTheme();
   const { isSessionLocked, unlockSession, complete2FALogin, requires2FA, tempCredentials } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -223,6 +228,7 @@ const SessionLockScreen = () => {
       exit={{ opacity: 0 }}
     >
       <LockCard
+        theme={theme}
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}

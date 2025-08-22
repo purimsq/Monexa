@@ -19,12 +19,14 @@ const ModalOverlay = styled(motion.div)`
 `;
 
 const ModalContent = styled(motion.div)`
-  background: ${props => props.theme.colors.card};
+  background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.25)' : props.theme.colors.card};
+  backdrop-filter: ${props => props.theme?.name === 'glassmorphism' ? 'blur(20px) saturate(180%)' : 'none'};
+  border: ${props => props.theme?.name === 'glassmorphism' ? '1px solid rgba(255, 255, 255, 0.3)' : 'none'};
   border-radius: 20px;
   padding: 32px;
   max-width: 400px;
   width: 100%;
-  box-shadow: ${props => props.theme.shadows.large};
+  box-shadow: ${props => props.theme?.name === 'glassmorphism' ? '0 8px 32px rgba(31, 38, 135, 0.37)' : props.theme.shadows.large};
   position: relative;
 `;
 
@@ -52,13 +54,13 @@ const ModalIcon = styled.div`
 const ModalTitle = styled.h3`
   font-size: 18px;
   font-weight: 600;
-  color: ${props => props.theme.colors.textPrimary};
+  color: ${props => props.theme?.name === 'glassmorphism' ? '#1a237e' : props.theme.colors.textPrimary};
   margin: 0;
 `;
 
 const ModalDescription = styled.p`
   font-size: 14px;
-  color: ${props => props.theme.colors.textSecondary};
+  color: ${props => props.theme?.name === 'glassmorphism' ? '#283593' : props.theme.colors.textSecondary};
   margin: 0;
   line-height: 1.5;
 `;
@@ -90,21 +92,22 @@ const Input = styled.input`
   width: 100%;
   padding: 14px 18px;
   padding-right: 45px;
-  border: 2px solid ${props => props.theme.colors.inputBorder};
+  border: 2px solid ${props => props.theme?.name === 'glassmorphism' ? 'rgba(156, 204, 101, 0.4)' : props.theme.colors.inputBorder};
   border-radius: 10px;
   font-size: 14px;
-  color: ${props => props.theme.colors.textPrimary};
-  background: ${props => props.theme.colors.input};
+  color: ${props => props.theme?.name === 'glassmorphism' ? '#1a237e' : props.theme.colors.textPrimary};
+  background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.2)' : props.theme.colors.input};
   transition: all 0.2s ease;
 
   &:focus {
     outline: none;
-    border-color: #1a1a1a;
-    box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.1);
+    border-color: ${props => props.theme?.name === 'glassmorphism' ? '#4caf50' : '#1a1a1a'};
+    box-shadow: 0 0 0 3px ${props => props.theme?.name === 'glassmorphism' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(26, 26, 26, 0.1)'};
+    background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.3)' : props.theme.colors.input};
   }
 
   &::placeholder {
-    color: #94a3b8;
+    color: ${props => props.theme?.name === 'glassmorphism' ? '#3949ab' : '#94a3b8'};
   }
 
   &.error {

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
+import { useTheme } from '../contexts/ThemeContext';
 import { 
   Bell, 
   ArrowLeft, 
@@ -22,6 +23,8 @@ const Container = styled.div`
   max-width: 800px;
   margin: 0 auto;
   padding: 24px;
+  background-color: ${props => props.theme?.colors?.primary || 'transparent'};
+  color: ${props => props.theme?.colors?.textPrimary || '#1e293b'};
 `;
 
 const Header = styled.div`
@@ -121,26 +124,30 @@ const NotificationsList = styled.div`
 `;
 
 const NotificationItem = styled(motion.div)`
-  background: white;
+  background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.4)' : 'white'};
+  backdrop-filter: ${props => props.theme?.name === 'glassmorphism' ? 'blur(25px) saturate(200%)' : 'none'};
+  border: ${props => props.theme?.name === 'glassmorphism' ? '1px solid rgba(255, 255, 255, 0.5)' : '1px solid #e2e8f0'};
   border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  border: 1px solid #e2e8f0;
+  padding: 16px;
+  box-shadow: ${props => props.theme?.name === 'glassmorphism' ? '0 10px 40px rgba(31, 38, 135, 0.45)' : '0 2px 8px rgba(0, 0, 0, 0.06)'};
   transition: all 0.2s ease;
   position: relative;
 
   &:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-    transform: translateY(-1px);
+    box-shadow: ${props => props.theme?.name === 'glassmorphism' ? '0 15px 50px rgba(31, 38, 135, 0.55)' : '0 4px 16px rgba(0, 0, 0, 0.1)'};
+    transform: translateY(-2px);
+    background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.5)' : 'white'};
   }
 
   &.unread {
-    border-left: 4px solid #1a1a1a;
-    background: #fefefe;
+    border-left: 4px solid ${props => props.theme?.name === 'glassmorphism' ? '#4caf50' : '#1a1a1a'};
+    background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.45)' : '#fefefe'};
+    box-shadow: ${props => props.theme?.name === 'glassmorphism' ? '0 12px 45px rgba(31, 38, 135, 0.5)' : '0 2px 8px rgba(0, 0, 0, 0.06)'};
   }
 
   &.read {
-    opacity: 0.8;
+    opacity: 0.7;
+    background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.25)' : 'white'};
   }
 `;
 
@@ -194,13 +201,13 @@ const NotificationContent = styled.div`
 const NotificationTitle = styled.h3`
   font-size: 16px;
   font-weight: 600;
-  color: #1e293b;
+  color: ${props => props.theme?.name === 'glassmorphism' ? '#1a237e' : '#1e293b'};
   margin: 0 0 4px 0;
 `;
 
 const NotificationMessage = styled.p`
   font-size: 14px;
-  color: #64748b;
+  color: ${props => props.theme?.name === 'glassmorphism' ? '#283593' : '#64748b'};
   margin: 0 0 8px 0;
   line-height: 1.5;
 `;
@@ -358,6 +365,7 @@ const notifications = [
 ];
 
 const Notifications = () => {
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const [filter, setFilter] = useState('all');
   const [notificationsList, setNotificationsList] = useState(notifications);
@@ -410,7 +418,7 @@ const Notifications = () => {
   const unreadCount = notificationsList.filter(n => !n.read).length;
 
   return (
-    <Container>
+    <Container theme={theme}>
       <Header>
         <BackButton
           onClick={() => navigate(-1)}
@@ -488,6 +496,7 @@ const Notifications = () => {
           filteredNotifications.map((notification, index) => (
             <NotificationItem
               key={notification.id}
+              theme={theme}
               className={notification.read ? 'read' : 'unread'}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -498,8 +507,8 @@ const Notifications = () => {
                   {notification.icon}
                 </NotificationIcon>
                 <NotificationContent>
-                  <NotificationTitle>{notification.title}</NotificationTitle>
-                  <NotificationMessage>{notification.message}</NotificationMessage>
+                  <NotificationTitle theme={theme}>{notification.title}</NotificationTitle>
+                  <NotificationMessage theme={theme}>{notification.message}</NotificationMessage>
                   <NotificationTime>{notification.time}</NotificationTime>
                 </NotificationContent>
               </NotificationHeader>

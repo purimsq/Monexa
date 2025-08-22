@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CreditCard, Lock, Calendar } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { useTheme } from '../contexts/ThemeContext';
 import apiService from '../services/api';
 
 const ModalOverlay = styled(motion.div)`
@@ -21,13 +22,16 @@ const ModalOverlay = styled(motion.div)`
 `;
 
 const ModalContent = styled(motion.div)`
-  background: white;
+  background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.25)' : 'white'};
+  backdrop-filter: ${props => props.theme?.name === 'glassmorphism' ? 'blur(20px) saturate(180%)' : 'none'};
+  border: ${props => props.theme?.name === 'glassmorphism' ? '1px solid rgba(255, 255, 255, 0.3)' : 'none'};
   border-radius: 16px;
   width: 100%;
   max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
+  box-shadow: ${props => props.theme?.name === 'glassmorphism' ? '0 8px 32px rgba(31, 38, 135, 0.37)' : 'none'};
 `;
 
 const ModalHeader = styled.div`
@@ -42,7 +46,7 @@ const ModalHeader = styled.div`
 const ModalTitle = styled.h2`
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1f2937;
+  color: ${props => props.theme?.name === 'glassmorphism' ? '#1a237e' : '#1f2937'};
   display: flex;
   align-items: center;
   gap: 8px;
@@ -77,39 +81,44 @@ const FormGroup = styled.div`
 
 const Label = styled.label`
   font-weight: 500;
-  color: #374151;
+  color: ${props => props.theme?.name === 'glassmorphism' ? '#283593' : '#374151'};
 `;
 
 const Input = styled.input`
   padding: 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid ${props => props.theme?.name === 'glassmorphism' ? 'rgba(156, 204, 101, 0.4)' : '#d1d5db'};
   border-radius: 8px;
   font-size: 1rem;
+  background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.2)' : 'white'};
+  color: ${props => props.theme?.name === 'glassmorphism' ? '#1a237e' : 'inherit'};
   transition: all 0.2s;
 
   &:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: ${props => props.theme?.name === 'glassmorphism' ? '#4caf50' : '#3b82f6'};
+    box-shadow: 0 0 0 3px ${props => props.theme?.name === 'glassmorphism' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(59, 130, 246, 0.1)'};
+    background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.3)' : 'white'};
   }
 
   &::placeholder {
-    color: #9ca3af;
+    color: ${props => props.theme?.name === 'glassmorphism' ? '#3949ab' : '#9ca3af'};
   }
 `;
 
 const Select = styled.select`
   padding: 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid ${props => props.theme?.name === 'glassmorphism' ? 'rgba(156, 204, 101, 0.4)' : '#d1d5db'};
   border-radius: 8px;
   font-size: 1rem;
-  background: white;
+  background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.2)' : 'white'};
+  color: ${props => props.theme?.name === 'glassmorphism' ? '#1a237e' : 'inherit'};
   transition: all 0.2s;
 
   &:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: ${props => props.theme?.name === 'glassmorphism' ? '#4caf50' : '#3b82f6'};
+    box-shadow: 0 0 0 3px ${props => props.theme?.name === 'glassmorphism' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(59, 130, 246, 0.1)'};
+    background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.3)' : 'white'};
   }
 `;
 
@@ -200,6 +209,7 @@ const Button = styled.button`
 `;
 
 const AddCardModal = ({ isOpen, onClose, onCardAdded }) => {
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     type: 'visa',
@@ -334,6 +344,7 @@ const AddCardModal = ({ isOpen, onClose, onCardAdded }) => {
           onClick={onClose}
         >
           <ModalContent
+            theme={theme}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}

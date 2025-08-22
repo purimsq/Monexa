@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { User, Edit, Save, X, Key } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import PasswordVerificationModal from '../components/PasswordVerificationModal';
 import PasswordChangeModal from '../components/PasswordChangeModal';
 
@@ -33,11 +34,12 @@ const Subtitle = styled.p`
 `;
 
 const ProfileCard = styled(motion.div)`
-  background: white;
+  background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.25)' : 'white'};
+  backdrop-filter: ${props => props.theme?.name === 'glassmorphism' ? 'blur(20px) saturate(180%)' : 'none'};
+  border: ${props => props.theme?.name === 'glassmorphism' ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid #e2e8f0'};
   border-radius: 16px;
   padding: 32px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
+  box-shadow: ${props => props.theme?.name === 'glassmorphism' ? '0 8px 32px rgba(31, 38, 135, 0.37)' : '0 4px 20px rgba(0, 0, 0, 0.08)'};
 `;
 
 const ProfileHeader = styled.div`
@@ -67,12 +69,12 @@ const ProfileInfo = styled.div`
 const ProfileName = styled.h2`
   font-size: 24px;
   font-weight: 700;
-  color: #1e293b;
+  color: ${props => props.theme?.name === 'glassmorphism' ? '#1a237e' : '#1e293b'};
   margin-bottom: 4px;
 `;
 
 const ProfileRole = styled.p`
-  color: #64748b;
+  color: ${props => props.theme?.name === 'glassmorphism' ? '#283593' : '#64748b'};
   font-size: 16px;
   margin-bottom: 8px;
 `;
@@ -191,6 +193,7 @@ const CancelButton = styled.button`
 
 const Profile = () => {
   const { user, updateProfile } = useAuth();
+  const { theme } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -325,6 +328,7 @@ const Profile = () => {
       </Header>
 
       <ProfileCard
+        theme={theme}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
@@ -332,8 +336,8 @@ const Profile = () => {
         <ProfileHeader>
           <Avatar>{user?.avatar || user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}</Avatar>
           <ProfileInfo>
-            <ProfileName>{formData.name || user?.name || 'User'}</ProfileName>
-            <ProfileRole>{formData.specialty || user?.role || 'Music Producer'}</ProfileRole>
+            <ProfileName theme={theme}>{formData.name || user?.name || 'User'}</ProfileName>
+            <ProfileRole theme={theme}>{formData.specialty || user?.role || 'Music Producer'}</ProfileRole>
           </ProfileInfo>
           {!isEditing && (
             <>

@@ -56,6 +56,14 @@ export const fonts = {
   }
 };
 
+// Helper function to convert hex to RGB for rgba usage
+const hexToRgb = (hex) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? 
+    `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` :
+    '255, 255, 255'; // fallback to white
+};
+
 // Accent Color Themes - 6 beautiful color mixes + default
 export const accentThemes = {
   default: {
@@ -459,61 +467,67 @@ const createDarkTheme = (accentTheme) => ({
   }
 });
 
-const createGlassmorphismTheme = (accentTheme) => ({
-  name: 'glassmorphism',
-  colors: {
-    // Inspired by the frosted headphones image - icy blues, whites, with warm orange accents
-    primary: 'rgba(255, 255, 255, 0.1)',
-    secondary: 'rgba(240, 248, 255, 0.15)',
-    tertiary: 'rgba(230, 240, 250, 0.2)',
-    background: 'url("/images/morphism.png") center/cover no-repeat fixed',
-    textPrimary: '#1a237e',
-    textSecondary: '#283593',
-    textTertiary: '#3949ab',
-    borderPrimary: 'rgba(156, 204, 101, 0.3)',
-    borderSecondary: 'rgba(156, 204, 101, 0.2)',
-    card: 'rgba(255, 255, 255, 0.25)',
-    cardHover: 'rgba(255, 255, 255, 0.35)',
-    input: 'rgba(255, 255, 255, 0.2)',
-    inputBorder: 'rgba(156, 204, 101, 0.4)',
-    inputFocus: 'rgba(255, 255, 255, 0.3)',
-    inputFocusBorder: '#4caf50',
-    buttonPrimary: '#4caf50',
-    buttonSecondary: 'rgba(255, 255, 255, 0.2)',
-    buttonText: '#ffffff',
-    buttonTextSecondary: '#1a237e',
-    accent: '#4caf50',
-    accentHover: '#66bb6a',
-    
-    // Status colors - Vibrant and clear for glassmorphism
-    success: '#4caf50',
-    warning: '#ff9800',
-    error: '#f44336',
-    info: '#2196f3',
-    
-    // Shadow colors - Subtle glass shadows
-    shadow: 'rgba(31, 38, 135, 0.15)',
-    shadowHover: 'rgba(31, 38, 135, 0.25)',
-    
-    // Glassmorphism specific properties
-    glassEffect: 'backdrop-filter: blur(20px) saturate(180%);',
-    glassBorder: '1px solid rgba(255, 255, 255, 0.3)',
-    glassShadow: '0 8px 32px rgba(31, 38, 135, 0.37)',
-    frostEffect: 'backdrop-filter: blur(10px) saturate(150%);',
-    frostBorder: '1px solid rgba(255, 255, 255, 0.2)',
-    frostShadow: '0 4px 16px rgba(31, 38, 135, 0.25)'
-  },
-  shadows: {
-    small: '0 4px 16px rgba(31, 38, 135, 0.25)',
-    medium: '0 8px 32px rgba(31, 38, 135, 0.37)',
-    large: '0 20px 60px rgba(31, 38, 135, 0.45)',
-  },
-  transitions: {
-    fast: '0.2s ease',
-    medium: '0.3s ease',
-    slow: '0.5s ease',
-  }
-});
+const createGlassmorphismTheme = (accentTheme) => {
+  // Extract accent colors for glassmorphism styling
+  const accentColor = accentTheme.colors[0]; // Primary accent color
+  const accentColorSecondary = accentTheme.colors[1]; // Secondary accent color
+  
+  return {
+    name: 'glassmorphism',
+    colors: {
+      // Inspired by the frosted headphones image - icy blues, whites, with accent colors
+      primary: 'rgba(255, 255, 255, 0.1)',
+      secondary: 'rgba(240, 248, 255, 0.15)',
+      tertiary: 'rgba(230, 240, 250, 0.2)',
+      background: 'url("/images/morphism.png") center/cover no-repeat fixed',
+      textPrimary: '#1a237e',
+      textSecondary: '#283593',
+      textTertiary: '#3949ab',
+      borderPrimary: `rgba(${hexToRgb(accentColor)}, 0.3)`,
+      borderSecondary: `rgba(${hexToRgb(accentColor)}, 0.2)`,
+      card: 'rgba(255, 255, 255, 0.25)',
+      cardHover: 'rgba(255, 255, 255, 0.35)',
+      input: 'rgba(255, 255, 255, 0.2)',
+      inputBorder: `rgba(${hexToRgb(accentColor)}, 0.4)`,
+      inputFocus: 'rgba(255, 255, 255, 0.3)',
+      inputFocusBorder: accentColor,
+      buttonPrimary: accentColor,
+      buttonSecondary: 'rgba(255, 255, 255, 0.2)',
+      buttonText: '#ffffff',
+      buttonTextSecondary: '#1a237e',
+      accent: accentColor,
+      accentHover: accentColorSecondary,
+      
+      // Status colors - Vibrant and clear for glassmorphism
+      success: '#4caf50',
+      warning: '#ff9800',
+      error: '#f44336',
+      info: '#2196f3',
+      
+      // Shadow colors - Subtle glass shadows
+      shadow: 'rgba(31, 38, 135, 0.15)',
+      shadowHover: 'rgba(31, 38, 135, 0.25)',
+      
+      // Glassmorphism specific properties with accent colors
+      glassEffect: 'backdrop-filter: blur(20px) saturate(180%);',
+      glassBorder: '1px solid rgba(255, 255, 255, 0.3)',
+      glassShadow: `0 8px 32px rgba(${hexToRgb(accentColor)}, 0.2)`,
+      frostEffect: 'backdrop-filter: blur(10px) saturate(150%);',
+      frostBorder: '1px solid rgba(255, 255, 255, 0.2)',
+      frostShadow: `0 4px 16px rgba(${hexToRgb(accentColor)}, 0.15)`
+    },
+    shadows: {
+      small: `0 4px 16px rgba(${hexToRgb(accentColor)}, 0.15)`,
+      medium: `0 8px 32px rgba(${hexToRgb(accentColor)}, 0.2)`,
+      large: `0 20px 60px rgba(${hexToRgb(accentColor)}, 0.25)`,
+    },
+    transitions: {
+      fast: '0.2s ease',
+      medium: '0.3s ease',
+      slow: '0.5s ease',
+    }
+  };
+};
 
 // Global styles for theme transitions
 const GlobalStyle = createGlobalStyle`

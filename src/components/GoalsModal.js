@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Target, Calendar, DollarSign, Plus, Trash2, TrendingUp } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { useTheme } from '../contexts/ThemeContext';
 import apiService from '../services/api';
 
 const ModalOverlay = styled(motion.div)`
@@ -21,13 +22,16 @@ const ModalOverlay = styled(motion.div)`
 `;
 
 const ModalContent = styled(motion.div)`
-  background: white;
+  background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.25)' : 'white'};
+  backdrop-filter: ${props => props.theme?.name === 'glassmorphism' ? 'blur(20px) saturate(180%)' : 'none'};
+  border: ${props => props.theme?.name === 'glassmorphism' ? '1px solid rgba(255, 255, 255, 0.3)' : 'none'};
   border-radius: 16px;
   width: 100%;
   max-width: 800px;
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
+  box-shadow: ${props => props.theme?.name === 'glassmorphism' ? '0 8px 32px rgba(31, 38, 135, 0.37)' : 'none'};
 `;
 
 const ModalHeader = styled.div`
@@ -42,7 +46,7 @@ const ModalHeader = styled.div`
 const ModalTitle = styled.h2`
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1f2937;
+  color: ${props => props.theme?.name === 'glassmorphism' ? '#1a237e' : '#1f2937'};
   display: flex;
   align-items: center;
   gap: 8px;
@@ -92,15 +96,17 @@ const GoalsList = styled.div`
 `;
 
 const GoalCard = styled.div`
-  border: 1px solid #e5e7eb;
+  border: 1px solid ${props => props.theme?.name === 'glassmorphism' ? 'rgba(156, 204, 101, 0.3)' : '#e5e7eb'};
   border-radius: 12px;
   padding: 20px;
-  background: #f8fafc;
+  background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.25)' : '#f8fafc'};
+  backdrop-filter: ${props => props.theme?.name === 'glassmorphism' ? 'blur(10px) saturate(150%)' : 'none'};
   transition: all 0.2s;
 
   &:hover {
-    border-color: #3b82f6;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+    border-color: ${props => props.theme?.name === 'glassmorphism' ? '#4caf50' : '#3b82f6'};
+    box-shadow: ${props => props.theme?.name === 'glassmorphism' ? '0 4px 16px rgba(31, 38, 135, 0.25)' : '0 4px 12px rgba(59, 130, 246, 0.1)'};
+    background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.35)' : '#f8fafc'};
   }
 `;
 
@@ -118,12 +124,12 @@ const GoalInfo = styled.div`
 const GoalTitle = styled.h3`
   font-size: 1.1rem;
   font-weight: 600;
-  color: #1f2937;
+  color: ${props => props.theme?.name === 'glassmorphism' ? '#1a237e' : '#1f2937'};
   margin-bottom: 4px;
 `;
 
 const GoalDescription = styled.p`
-  color: #6b7280;
+  color: ${props => props.theme?.name === 'glassmorphism' ? '#283593' : '#6b7280'};
   font-size: 0.9rem;
   margin-bottom: 8px;
 `;
@@ -309,6 +315,7 @@ const EmptyIcon = styled.div`
 `;
 
 const GoalsModal = ({ isOpen, onClose }) => {
+  const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState('view');
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -422,6 +429,7 @@ const GoalsModal = ({ isOpen, onClose }) => {
           onClick={onClose}
         >
           <ModalContent
+            theme={theme}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}

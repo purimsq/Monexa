@@ -407,11 +407,37 @@ const ProfileSection = styled.div`
   gap: 20px;
   margin-bottom: 24px;
   padding: 24px;
-  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  background: ${props => {
+    if (props.theme?.name === 'glassmorphism') {
+      return 'rgba(255, 255, 255, 0.4)';
+    } else if (props.theme?.name === 'dark') {
+      return 'linear-gradient(135deg, #1e293b 0%, #334155 100%)';
+    } else {
+      return 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)';
+    }
+  }};
+  backdrop-filter: ${props => props.theme?.name === 'glassmorphism' ? 'blur(20px) saturate(180%)' : 'none'};
   border-radius: 16px;
-  border: 1px solid #e2e8f0;
+  border: ${props => {
+    if (props.theme?.name === 'glassmorphism') {
+      return props.theme?.colors?.borderPrimary || '1px solid rgba(255, 255, 255, 0.5)';
+    } else if (props.theme?.name === 'dark') {
+      return '1px solid #475569';
+    } else {
+      return '1px solid #e2e8f0';
+    }
+  }};
   position: relative;
   overflow: hidden;
+  box-shadow: ${props => {
+    if (props.theme?.name === 'glassmorphism') {
+      return props.theme?.shadows?.medium || '0 8px 32px rgba(31, 38, 135, 0.4)';
+    } else if (props.theme?.name === 'dark') {
+      return '0 8px 32px rgba(0, 0, 0, 0.3)';
+    } else {
+      return '0 4px 16px rgba(0, 0, 0, 0.04)';
+    }
+  }};
 
   &::before {
     content: '';
@@ -420,7 +446,22 @@ const ProfileSection = styled.div`
     right: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(26,26,26,0.03) 0%, transparent 70%);
+    background: ${props => {
+      if (props.theme?.name === 'glassmorphism') {
+        const accentColor = props.theme?.colors?.accent || '#4caf50';
+        // Extract RGB from hex color for rgba
+        const hexToRgb = (hex) => {
+          const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+          return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '76, 175, 80';
+        };
+        const rgb = hexToRgb(accentColor);
+        return `radial-gradient(circle, rgba(${rgb}, 0.1) 0%, transparent 70%)`;
+      } else if (props.theme?.name === 'dark') {
+        return 'radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 70%)';
+      } else {
+        return 'radial-gradient(circle, rgba(26,26,26,0.03) 0%, transparent 70%)';
+      }
+    }};
     animation: float 6s ease-in-out infinite;
   }
 
@@ -434,7 +475,17 @@ const ProfileAvatar = styled.div`
   width: 72px;
   height: 72px;
   border-radius: 20px;
-  background: linear-gradient(135deg, #1a1a1a, #333333);
+  background: ${props => {
+    if (props.theme?.name === 'glassmorphism') {
+      const accentColor = props.theme?.colors?.accent || '#4caf50';
+      const accentHover = props.theme?.colors?.accentHover || '#2e7d32';
+      return `linear-gradient(135deg, ${accentColor}, ${accentHover})`;
+    } else if (props.theme?.name === 'dark') {
+      return 'linear-gradient(135deg, #475569, #64748b)';
+    } else {
+      return 'linear-gradient(135deg, #1a1a1a, #333333)';
+    }
+  }};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -442,14 +493,32 @@ const ProfileAvatar = styled.div`
   font-weight: 700;
   font-size: 28px;
   position: relative;
-  box-shadow: 0 8px 24px rgba(26, 26, 26, 0.2);
+  box-shadow: ${props => {
+    if (props.theme?.name === 'glassmorphism') {
+      return props.theme?.shadows?.small || '0 8px 24px rgba(76, 175, 80, 0.3)';
+    } else if (props.theme?.name === 'dark') {
+      return '0 8px 24px rgba(0, 0, 0, 0.4)';
+    } else {
+      return '0 8px 24px rgba(26, 26, 26, 0.2)';
+    }
+  }};
 
   &::after {
     content: '';
     position: absolute;
     inset: -2px;
     border-radius: 22px;
-    background: linear-gradient(45deg, #1a1a1a, #333333, #1a1a1a);
+    background: ${props => {
+      if (props.theme?.name === 'glassmorphism') {
+        const accentColor = props.theme?.colors?.accent || '#4caf50';
+        const accentHover = props.theme?.colors?.accentHover || '#2e7d32';
+        return `linear-gradient(45deg, ${accentColor}, ${accentHover}, ${accentColor})`;
+      } else if (props.theme?.name === 'dark') {
+        return 'linear-gradient(45deg, #475569, #64748b, #475569)';
+      } else {
+        return 'linear-gradient(45deg, #1a1a1a, #333333, #1a1a1a)';
+      }
+    }};
     background-size: 200% 200%;
     animation: borderGlow 3s ease-in-out infinite;
     z-index: -1;
@@ -467,13 +536,29 @@ const ProfileInfo = styled.div`
 
 const ProfileName = styled.div`
   font-weight: 600;
-  color: #1e293b;
+  color: ${props => {
+    if (props.theme?.name === 'glassmorphism') {
+      return '#1a237e';
+    } else if (props.theme?.name === 'dark') {
+      return '#f8fafc';
+    } else {
+      return '#1e293b';
+    }
+  }};
   font-size: 16px;
   margin-bottom: 4px;
 `;
 
 const ProfileEmail = styled.div`
-  color: #64748b;
+  color: ${props => {
+    if (props.theme?.name === 'glassmorphism') {
+      return '#283593';
+    } else if (props.theme?.name === 'dark') {
+      return '#cbd5e1';
+    } else {
+      return '#64748b';
+    }
+  }};
   font-size: 14px;
 `;
 
@@ -829,7 +914,6 @@ const Settings = () => {
       <SettingsGrid>
         {/* Profile Settings - Top Left */}
         <SettingsCard
-          className="featured"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -842,11 +926,11 @@ const Settings = () => {
             <CardTitle>Profile & Identity</CardTitle>
           </CardHeader>
 
-          <ProfileSection>
-            <ProfileAvatar>{user?.avatar || user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}</ProfileAvatar>
+          <ProfileSection theme={theme}>
+            <ProfileAvatar theme={theme}>{user?.avatar || user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}</ProfileAvatar>
             <ProfileInfo>
-              <ProfileName>{user?.name || 'User'}</ProfileName>
-              <ProfileEmail>{user?.email || 'user@email.com'}</ProfileEmail>
+              <ProfileName theme={theme}>{user?.name || 'User'}</ProfileName>
+              <ProfileEmail theme={theme}>{user?.email || 'user@email.com'}</ProfileEmail>
             </ProfileInfo>
           </ProfileSection>
 

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Download, Upload, Printer, DollarSign, Euro, PoundSterling } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 const DashboardContainer = styled.div`
   display: grid;
@@ -231,16 +232,18 @@ const PrintIcon = styled(Printer)`
 `;
 
 const Card = styled(motion.div)`
-  background: white;
+  background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.25)' : 'white'};
+  backdrop-filter: ${props => props.theme?.name === 'glassmorphism' ? 'blur(20px) saturate(180%)' : 'none'};
+  border: ${props => props.theme?.name === 'glassmorphism' ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid #e2e8f0'};
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
+  box-shadow: ${props => props.theme?.name === 'glassmorphism' ? '0 8px 32px rgba(31, 38, 135, 0.37)' : '0 4px 12px rgba(0, 0, 0, 0.05)'};
   transition: all 0.2s ease;
 
   &:hover {
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    box-shadow: ${props => props.theme?.name === 'glassmorphism' ? '0 12px 40px rgba(31, 38, 135, 0.45)' : '0 8px 20px rgba(0, 0, 0, 0.08)'};
     transform: translateY(-2px);
+    background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.35)' : 'white'};
   }
 `;
 
@@ -545,6 +548,7 @@ const handleDownload = () => {
 };
 
 function Dashboard() {
+  const { theme } = useTheme();
   const { user } = useAuth();
   const firstName = user?.name?.split(' ')[0] || 'User';
   

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import apiService from '../services/api';
 import GoalsModal from '../components/GoalsModal';
 import { 
@@ -73,20 +74,27 @@ const TwoColumnGrid = styled.div`
 `;
 
 const Card = styled(motion.div)`
-  background: white;
+  background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.25)' : 'white'};
+  backdrop-filter: ${props => props.theme?.name === 'glassmorphism' ? 'blur(20px) saturate(180%)' : 'none'};
+  border: ${props => props.theme?.name === 'glassmorphism' ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid #e2e8f0'};
   border-radius: 20px;
   padding: 28px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
+  box-shadow: ${props => props.theme?.name === 'glassmorphism' ? '0 8px 32px rgba(31, 38, 135, 0.37)' : '0 6px 24px rgba(0, 0, 0, 0.08)'};
   min-height: 280px;
   display: flex;
   flex-direction: column;
+
+  &:hover {
+    box-shadow: ${props => props.theme?.name === 'glassmorphism' ? '0 12px 40px rgba(31, 38, 135, 0.45)' : '0 8px 32px rgba(0, 0, 0, 0.12)'};
+    transform: translateY(-2px);
+    background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.35)' : 'white'};
+  }
 `;
 
 const CardTitle = styled.h3`
   font-size: 18px;
   font-weight: 600;
-  color: #1e293b;
+  color: ${props => props.theme?.name === 'glassmorphism' ? '#1a237e' : '#1e293b'};
   margin-bottom: 16px;
   display: flex;
   align-items: center;
@@ -600,6 +608,7 @@ const transactions = [
 const MyAccount = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [cards, setCards] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -840,11 +849,12 @@ const MyAccount = () => {
         </WalletCard>
 
         <Card
+          theme={theme}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
         >
-          <CardTitle>
+          <CardTitle theme={theme}>
             <CreditCard size={22} />
             Payment Cards
           </CardTitle>
@@ -912,6 +922,7 @@ const MyAccount = () => {
 
       {/* Transactions Section */}
       <Card
+        theme={theme}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.2 }}
@@ -919,7 +930,7 @@ const MyAccount = () => {
       >
         <TransactionSection>
           <SectionHeader>
-            <CardTitle>
+            <CardTitle theme={theme}>
               <TrendingUp size={22} />
               Recent Transactions
             </CardTitle>

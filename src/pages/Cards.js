@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
+import { useTheme } from '../contexts/ThemeContext';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -136,8 +137,9 @@ const CardsGrid = styled.div`
 `;
 
 const CardItem = styled(motion.div)`
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 2px solid #e2e8f0;
+  background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.25)' : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)'};
+  backdrop-filter: ${props => props.theme?.name === 'glassmorphism' ? 'blur(20px) saturate(180%)' : 'none'};
+  border: ${props => props.theme?.name === 'glassmorphism' ? '2px solid rgba(255, 255, 255, 0.3)' : '2px solid #e2e8f0'};
   border-radius: 20px;
   padding: 28px;
   position: relative;
@@ -147,29 +149,31 @@ const CardItem = styled(motion.div)`
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  box-shadow: ${props => props.theme?.name === 'glassmorphism' ? '0 8px 32px rgba(31, 38, 135, 0.37)' : 'none'};
 
   &:hover {
-    border-color: #1a1a1a;
+    border-color: ${props => props.theme?.name === 'glassmorphism' ? '#4caf50' : '#1a1a1a'};
     transform: translateY(-3px);
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+    box-shadow: ${props => props.theme?.name === 'glassmorphism' ? '0 12px 40px rgba(31, 38, 135, 0.45)' : '0 12px 35px rgba(0, 0, 0, 0.15)'};
+    background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.35)' : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)'};
   }
 
   &.active {
-    border-color: #1a1a1a;
-    background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
-    color: white;
+    border-color: ${props => props.theme?.name === 'glassmorphism' ? '#4caf50' : '#1a1a1a'};
+    background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.4)' : 'linear-gradient(135deg, #1a1a1a 0%, #333333 100%)'};
+    color: ${props => props.theme?.name === 'glassmorphism' ? '#1a237e' : 'white'};
   }
 
   &.visa {
-    background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
-    color: white;
-    border-color: #1a1a1a;
+    background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.4)' : 'linear-gradient(135deg, #1a1a1a 0%, #333333 100%)'};
+    color: ${props => props.theme?.name === 'glassmorphism' ? '#1a237e' : 'white'};
+    border-color: ${props => props.theme?.name === 'glassmorphism' ? '#4caf50' : '#1a1a1a'};
   }
 
   &.mastercard {
-    background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
-    color: white;
-    border-color: #ff6b35;
+    background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.4)' : 'linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)'};
+    color: ${props => props.theme?.name === 'glassmorphism' ? '#1a237e' : 'white'};
+    border-color: ${props => props.theme?.name === 'glassmorphism' ? '#4caf50' : '#ff6b35'};
   }
 `;
 
@@ -301,6 +305,7 @@ const getMockCards = (userName) => [
 ];
 
 const Cards = () => {
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [cards, setCards] = useState([]);
