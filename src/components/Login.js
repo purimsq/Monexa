@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
-import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Shield, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import AuthLayout from './AuthLayout';
 
@@ -183,14 +183,85 @@ const ErrorMessage = styled.div`
   border-left: 3px solid #ef4444;
 `;
 
+const TwoFactorContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  text-align: center;
+`;
+
+const TwoFactorTitle = styled.h2`
+  color: #1e293b;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+`;
+
+const TwoFactorDescription = styled.p`
+  color: #64748b;
+  font-size: 16px;
+  margin: 0;
+  line-height: 1.5;
+`;
+
+const TwoFactorInput = styled.input`
+  width: 100%;
+  padding: 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  font-size: 18px;
+  text-align: center;
+  letter-spacing: 4px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.9);
+  color: #1e293b;
+
+  &::placeholder {
+    color: #94a3b8;
+    letter-spacing: 2px;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #1a1a1a;
+    box-shadow: 0 0 0 4px rgba(26, 26, 26, 0.1);
+    background: rgba(255, 255, 255, 1);
+  }
+`;
+
+const BackButton = styled(motion.button)`
+  background: none;
+  border: 2px solid #e2e8f0;
+  color: #64748b;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: #1a1a1a;
+    color: #1a1a1a;
+  }
+`;
+
 const Login = ({ onSwitchToSignup }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+  const [twoFactorToken, setTwoFactorToken] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [tempCredentials, setTempCredentials] = useState(null);
   const { login } = useAuth();
 
   const handleInputChange = (e) => {
@@ -206,6 +277,11 @@ const Login = ({ onSwitchToSignup }) => {
         [name]: ''
       }));
     }
+  };
+
+  const handle2FAInputChange = (e) => {
+    const value = e.target.value.replace(/\D/g, '').slice(0, 6); // Only allow digits, max 6
+    setTwoFactorToken(value);
   };
 
   const validateForm = () => {
@@ -227,6 +303,15 @@ const Login = ({ onSwitchToSignup }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const validate2FA = () => {
+    if (!twoFactorToken || twoFactorToken.length !== 6) {
+      setErrors(prev => ({ ...prev, twoFactor: 'Please enter a valid 6-digit code' }));
+      return false;
+    }
+    setErrors(prev => ({ ...prev, twoFactor: '' }));
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -241,6 +326,14 @@ const Login = ({ onSwitchToSignup }) => {
         toast.success('Welcome back to Monexa!', {
           position: "bottom-right",
           autoClose: 3000,
+        });
+      } else if (result.requires2FA) {
+        // Store credentials temporarily and show 2FA input
+        setTempCredentials({ email: formData.email, password: formData.password });
+        setRequires2FA(true);
+        toast.info('Please enter your 2FA code', {
+          position: "bottom-right",
+          autoClose: 4000,
         });
       } else {
         toast.error(result.error || 'Login failed. Please try again.', {
@@ -257,6 +350,99 @@ const Login = ({ onSwitchToSignup }) => {
       setIsLoading(false);
     }
   };
+
+  const handle2FASubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validate2FA()) return;
+
+    setIsLoading(true);
+    
+    try {
+      const result = await login(tempCredentials.email, tempCredentials.password, twoFactorToken);
+      
+      if (result.success) {
+        toast.success('Welcome back to Monexa!', {
+          position: "bottom-right",
+          autoClose: 3000,
+        });
+      } else {
+        toast.error(result.error || 'Invalid 2FA code. Please try again.', {
+          position: "bottom-right",
+          autoClose: 4000,
+        });
+        setTwoFactorToken('');
+      }
+    } catch (error) {
+      toast.error('An unexpected error occurred. Please try again.', {
+        position: "bottom-right",
+        autoClose: 4000,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleBackToLogin = () => {
+    setRequires2FA(false);
+    setTwoFactorToken('');
+    setTempCredentials(null);
+    setErrors({});
+  };
+
+  if (requires2FA) {
+    return (
+      <AuthLayout>
+        <TwoFactorContainer>
+          <div>
+            <TwoFactorTitle>Two-Factor Authentication</TwoFactorTitle>
+            <TwoFactorDescription>
+              Enter the 6-digit code from your authenticator app
+            </TwoFactorDescription>
+          </div>
+
+          <Form onSubmit={handle2FASubmit}>
+            <FormGroup>
+              <InputContainer>
+                <InputIcon>
+                  <Shield size={20} />
+                </InputIcon>
+                <TwoFactorInput
+                  type="text"
+                  placeholder="000000"
+                  value={twoFactorToken}
+                  onChange={handle2FAInputChange}
+                  maxLength={6}
+                  autoFocus
+                />
+              </InputContainer>
+              {errors.twoFactor && <ErrorMessage>{errors.twoFactor}</ErrorMessage>}
+            </FormGroup>
+
+            <LoginButton
+              type="submit"
+              disabled={isLoading}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {isLoading ? 'Verifying...' : 'Verify & Sign In'}
+              {!isLoading && <ArrowRight size={20} />}
+            </LoginButton>
+
+            <BackButton
+              type="button"
+              onClick={handleBackToLogin}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <ArrowLeft size={16} />
+              Back to Login
+            </BackButton>
+          </Form>
+        </TwoFactorContainer>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout>

@@ -137,8 +137,12 @@ class ApiService {
     }
 
     // Authentication APIs
-    async login(email, password) {
-        const response = await this.post('/auth/login', { email, password });
+    async login(email, password, twoFactorToken = null) {
+        const loginData = { email, password };
+        if (twoFactorToken) {
+            loginData.twoFactorToken = twoFactorToken;
+        }
+        const response = await this.post('/auth/login', loginData);
         if (response.success && response.token) {
             this.setToken(response.token);
         }

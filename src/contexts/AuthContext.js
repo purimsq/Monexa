@@ -40,12 +40,14 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (email, password, twoFactorToken = null) => {
     try {
-      const response = await apiService.login(email, password);
+      const response = await apiService.login(email, password, twoFactorToken);
       if (response.success) {
         setUser(response.user);
         return { success: true };
+      } else if (response.requires2FA) {
+        return { success: false, requires2FA: true, error: response.error || '2FA required' };
       } else {
         return { success: false, error: response.error || 'Login failed' };
       }

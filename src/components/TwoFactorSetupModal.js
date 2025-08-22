@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Smartphone, Shield, Check, AlertCircle, Copy, Download } from 'lucide-react';
+import { X, Smartphone, Shield, Check, AlertCircle, Copy } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiService from '../services/api';
 
