@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
-import { User, Edit, Save, X } from 'lucide-react';
+import { User, Edit, Save, X, Key } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import PasswordVerificationModal from '../components/PasswordVerificationModal';
+import PasswordChangeModal from '../components/PasswordChangeModal';
 
 const Container = styled.div`
   max-width: 800px;
@@ -203,6 +204,7 @@ const Profile = () => {
 
   // Modal state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState(null);
 
@@ -261,6 +263,46 @@ const Profile = () => {
     }
   };
 
+  const handlePasswordChange = async (currentPassword, newPassword) => {
+    setModalLoading(true);
+    setModalError(null);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/users/password', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('monexa_token')}`
+        },
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setShowPasswordChangeModal(false);
+        setModalLoading(false);
+        
+        toast.success('Password changed successfully! Please log in again with your new password.', {
+          position: "bottom-right",
+          autoClose: 5000,
+        });
+
+        // Optionally logout user to force re-login with new password
+        setTimeout(() => {
+          // You can add logout logic here if needed
+        }, 2000);
+      } else {
+        setModalError(result.error || 'Failed to change password');
+        setModalLoading(false);
+      }
+    } catch (error) {
+      console.error('Password change error:', error);
+      setModalError('An error occurred while changing password');
+      setModalLoading(false);
+    }
+  };
+
   const handleCancel = () => {
     setIsEditing(false);
   };
@@ -294,10 +336,19 @@ const Profile = () => {
             <ProfileRole>{formData.specialty || user?.role || 'Music Producer'}</ProfileRole>
           </ProfileInfo>
           {!isEditing && (
-            <EditButton onClick={handleEdit}>
-              <Edit size={16} />
-              Edit Profile
-            </EditButton>
+            <>
+              <EditButton onClick={handleEdit}>
+                <Edit size={16} />
+                Edit Profile
+              </EditButton>
+              <EditButton 
+                onClick={() => setShowPasswordChangeModal(true)}
+                style={{ marginLeft: '12px', background: 'linear-gradient(135deg, #ef4444, #dc2626)' }}
+              >
+                <Key size={16} />
+                Change Password
+              </EditButton>
+            </>
           )}
         </ProfileHeader>
 
@@ -394,6 +445,15 @@ const Profile = () => {
         onVerify={handlePasswordVerification}
         title="Verify Password"
         description="Enter your current password to save profile changes"
+        loading={modalLoading}
+        error={modalError}
+      />
+
+      {/* Password Change Modal */}
+      <PasswordChangeModal
+        isOpen={showPasswordChangeModal}
+        onClose={() => setShowPasswordChangeModal(false)}
+        onPasswordChange={handlePasswordChange}
         loading={modalLoading}
         error={modalError}
       />

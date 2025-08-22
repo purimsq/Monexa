@@ -107,6 +107,57 @@ router.put('/profile', verifyToken, [
     }
 });
 
+// Verify password
+router.post('/verify-password', verifyToken, [
+    body('password').notEmpty().withMessage('Password is required')
+], async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({
+                success: false,
+                error: 'Validation failed',
+                details: errors.array()
+            });
+        }
+
+        const { password } = req.body;
+
+        // Get user's current password
+        const user = await database.get(
+            'SELECT password FROM users WHERE id = ?',
+            [req.user.id]
+        );
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        // Verify password
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) {
+            return res.status(400).json({
+                success: false,
+                error: 'Password is incorrect'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Password verified successfully'
+        });
+    } catch (error) {
+        console.error('Password verification error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to verify password'
+        });
+    }
+});
+
 // Change password
 router.put('/password', verifyToken, [
     body('currentPassword').exists().withMessage('Current password required'),

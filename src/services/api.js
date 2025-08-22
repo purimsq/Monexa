@@ -176,6 +176,10 @@ class ApiService {
         return this.put('/users/profile', profileData);
     }
 
+    async verifyPassword(password) {
+        return this.post('/users/verify-password', { password });
+    }
+
     async changePassword(currentPassword, newPassword) {
         return this.put('/users/password', { currentPassword, newPassword });
     }

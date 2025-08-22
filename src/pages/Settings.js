@@ -13,17 +13,14 @@ import {
   Download,
   Globe,
   Save,
-  Eye,
-  EyeOff,
-  Check,
   X,
-  Lock,
   Key
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import apiService from '../services/api';
 import PasswordVerificationModal from '../components/PasswordVerificationModal';
+import PasswordChangeModal from '../components/PasswordChangeModal';
 
 const Container = styled.div`
   max-width: 1800px;
@@ -448,130 +445,9 @@ const shimmerAnimation = `
   }
 `;
 
-const PasswordSection = styled.div`
-  margin-top: 24px;
-  padding: 24px;
-  background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
-  border-radius: 16px;
-  border: 1px solid #fecaca;
-  position: relative;
-  overflow: hidden;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(239,68,68,0.03) 0%, transparent 70%);
-    animation: float 6s ease-in-out infinite;
-  }
-`;
 
-const PasswordHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #fecaca;
-`;
 
-const PasswordIcon = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 18px;
-`;
-
-const PasswordTitle = styled.h4`
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0;
-`;
-
-const PasswordDescription = styled.p`
-  font-size: 13px;
-  color: #64748b;
-  margin: 0;
-  line-height: 1.4;
-`;
-
-const PasswordInput = styled.div`
-  position: relative;
-  margin-bottom: 16px;
-`;
-
-const PasswordToggle = styled.button`
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: #64748b;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-
-  &:hover {
-    color: #1e293b;
-    background: #f1f5f9;
-  }
-`;
-
-const PasswordStrength = styled.div`
-  margin-top: 8px;
-  font-size: 12px;
-  color: #64748b;
-`;
-
-const StrengthBar = styled.div`
-  height: 4px;
-  background: #e2e8f0;
-  border-radius: 2px;
-  margin-top: 4px;
-  overflow: hidden;
-`;
-
-const StrengthFill = styled.div`
-  height: 100%;
-  background: ${props => {
-    if (props.strength === 'weak') return '#ef4444';
-    if (props.strength === 'medium') return '#f59e0b';
-    if (props.strength === 'strong') return '#10b981';
-    return '#e2e8f0';
-  }};
-  width: ${props => {
-    if (props.strength === 'weak') return '33%';
-    if (props.strength === 'medium') return '66%';
-    if (props.strength === 'strong') return '100%';
-    return '0%';
-  }};
-  transition: all 0.3s ease;
-`;
-
-const PasswordRequirements = styled.div`
-  margin-top: 12px;
-  font-size: 12px;
-  color: #64748b;
-`;
-
-const Requirement = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
-  color: ${props => props.met ? '#10b981' : '#64748b'};
-`;
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -613,64 +489,16 @@ const Settings = () => {
     allowMessages: true
   });
 
-  // Password management state
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
-
-  const [showPasswords, setShowPasswords] = useState({
-    currentPassword: false,
-    newPassword: false,
-    confirmPassword: false
-  });
-
   // Modal state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState(null);
-
-  const [passwordStrength, setPasswordStrength] = useState({
-    score: 0,
-    strength: 'weak',
-    requirements: {
-      length: false,
-      uppercase: false,
-      lowercase: false,
-      number: false,
-      special: false
-    }
-  });
 
   // Initialize settings with user data
   useEffect(() => {
     loadUserSettings();
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Check password strength
-  useEffect(() => {
-    const checkPasswordStrength = (password) => {
-      const requirements = {
-        length: password.length >= 8,
-        uppercase: /[A-Z]/.test(password),
-        lowercase: /[a-z]/.test(password),
-        number: /\d/.test(password),
-        special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
-      };
-
-      const score = Object.values(requirements).filter(Boolean).length;
-      let strength = 'weak';
-      if (score >= 4) strength = 'strong';
-      else if (score >= 3) strength = 'medium';
-
-      setPasswordStrength({ score, strength, requirements });
-    };
-
-    if (passwordData.newPassword) {
-      checkPasswordStrength(passwordData.newPassword);
-    }
-  }, [passwordData.newPassword]);
 
   const loadUserSettings = async () => {
     if (user) {
@@ -757,13 +585,7 @@ const Settings = () => {
     }
   };
 
-  const handlePasswordChange = (field, value) => {
-    setPasswordData(prev => ({ ...prev, [field]: value }));
-  };
 
-  const togglePasswordVisibility = (field) => {
-    setShowPasswords(prev => ({ ...prev, [field]: !prev[field] }));
-  };
 
   const handleSaveProfile = () => {
     setModalError(null);
@@ -803,40 +625,18 @@ const Settings = () => {
     }
   };
 
-  const handleChangePassword = async () => {
-    // Validate password requirements
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error('New passwords do not match', {
-        position: "bottom-right",
-        autoClose: 4000,
-      });
-      return;
-    }
-
-    if (passwordStrength.score < 3) {
-      toast.error('Password does not meet security requirements', {
-        position: "bottom-right",
-        autoClose: 4000,
-      });
-      return;
-    }
+  const handlePasswordChange = async (currentPassword, newPassword) => {
+    setModalLoading(true);
+    setModalError(null);
 
     try {
-      const result = await apiService.changePassword(
-        passwordData.currentPassword,
-        passwordData.newPassword
-      );
+      const result = await apiService.changePassword(currentPassword, newPassword);
 
       if (result.success) {
-        // Clear password fields
-        setPasswordData(prev => ({
-          ...prev,
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: ''
-        }));
-
-        toast.success('Password changed successfully. Please log in again with your new password.', {
+        setShowPasswordChangeModal(false);
+        setModalLoading(false);
+        
+        toast.success('Password changed successfully! Please log in again with your new password.', {
           position: "bottom-right",
           autoClose: 5000,
         });
@@ -846,16 +646,12 @@ const Settings = () => {
           // You can add logout logic here if needed
         }, 2000);
       } else {
-        toast.error(result.error || 'Failed to change password', {
-          position: "bottom-right",
-          autoClose: 4000,
-        });
+        setModalError(result.error || 'Failed to change password');
+        setModalLoading(false);
       }
     } catch (error) {
-      toast.error('An error occurred while changing password', {
-        position: "bottom-right",
-        autoClose: 4000,
-      });
+      setModalError('An error occurred while changing password');
+      setModalLoading(false);
     }
   };
 
@@ -976,130 +772,48 @@ const Settings = () => {
            </ButtonGroup>
         </SettingsCard>
 
-        {/* Password Management - Top Right */}
-        <SettingsCard
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <CardHeader>
-            <CardIcon>
-              <Key size={20} />
-            </CardIcon>
-            <CardTitle>Password Management</CardTitle>
-          </CardHeader>
+                 {/* Password Management - Top Right */}
+         <SettingsCard
+           initial={{ opacity: 0, y: 30 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ duration: 0.5, delay: 0.1 }}
+         >
+           <CardHeader>
+             <CardIcon>
+               <Key size={20} />
+             </CardIcon>
+             <CardTitle>Password Management</CardTitle>
+           </CardHeader>
 
-          <SettingItem>
-            <SettingInfo>
-              <SettingLabel>Current Password</SettingLabel>
-              <SettingDescription>Enter your current password</SettingDescription>
-            </SettingInfo>
-            <PasswordInput>
-              <Input
-                type={showPasswords.currentPassword ? 'text' : 'password'}
-                value={passwordData.currentPassword}
-                onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
-                placeholder="Current password"
-              />
-              <PasswordToggle
-                onClick={() => togglePasswordVisibility('currentPassword')}
-                type="button"
-              >
-                {showPasswords.currentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </PasswordToggle>
-            </PasswordInput>
-          </SettingItem>
+           <SettingItem>
+             <SettingInfo>
+               <SettingLabel>Change Password</SettingLabel>
+               <SettingDescription>Update your password securely with current password verification</SettingDescription>
+             </SettingInfo>
+             <Button
+               onClick={() => setShowPasswordChangeModal(true)}
+               whileHover={{ scale: 1.02 }}
+               whileTap={{ scale: 0.98 }}
+             >
+               <Key size={16} />
+               Change Password
+             </Button>
+           </SettingItem>
 
-          <SettingItem>
-            <SettingInfo>
-              <SettingLabel>New Password</SettingLabel>
-              <SettingDescription>Enter your new password</SettingDescription>
-            </SettingInfo>
-            <PasswordInput>
-              <Input
-                type={showPasswords.newPassword ? 'text' : 'password'}
-                value={passwordData.newPassword}
-                onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
-                placeholder="New password"
-                className={passwordData.newPassword ? (passwordStrength.score >= 3 ? 'success' : 'error') : ''}
-              />
-              <PasswordToggle
-                onClick={() => togglePasswordVisibility('newPassword')}
-                type="button"
-              >
-                {showPasswords.newPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </PasswordToggle>
-            </PasswordInput>
-          </SettingItem>
-
-          {passwordData.newPassword && (
-            <>
-              <PasswordStrength>
-                Password Strength: {passwordStrength.strength.charAt(0).toUpperCase() + passwordStrength.strength.slice(1)}
-                <StrengthBar>
-                  <StrengthFill strength={passwordStrength.strength} />
-                </StrengthBar>
-              </PasswordStrength>
-
-              <PasswordRequirements>
-                <Requirement met={passwordStrength.requirements.length}>
-                  {passwordStrength.requirements.length ? <Check size={12} /> : <X size={12} />}
-                  At least 8 characters
-                </Requirement>
-                <Requirement met={passwordStrength.requirements.uppercase}>
-                  {passwordStrength.requirements.uppercase ? <Check size={12} /> : <X size={12} />}
-                  One uppercase letter
-                </Requirement>
-                <Requirement met={passwordStrength.requirements.lowercase}>
-                  {passwordStrength.requirements.lowercase ? <Check size={12} /> : <X size={12} />}
-                  One lowercase letter
-                </Requirement>
-                <Requirement met={passwordStrength.requirements.number}>
-                  {passwordStrength.requirements.number ? <Check size={12} /> : <X size={12} />}
-                  One number
-                </Requirement>
-                <Requirement met={passwordStrength.requirements.special}>
-                  {passwordStrength.requirements.special ? <Check size={12} /> : <X size={12} />}
-                  One special character
-                </Requirement>
-              </PasswordRequirements>
-            </>
-          )}
-
-          <SettingItem>
-            <SettingInfo>
-              <SettingLabel>Confirm New Password</SettingLabel>
-              <SettingDescription>Confirm your new password</SettingDescription>
-            </SettingInfo>
-            <PasswordInput>
-              <Input
-                type={showPasswords.confirmPassword ? 'text' : 'password'}
-                value={passwordData.confirmPassword}
-                onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
-                placeholder="Confirm new password"
-                className={passwordData.confirmPassword ? (passwordData.newPassword === passwordData.confirmPassword ? 'success' : 'error') : ''}
-              />
-              <PasswordToggle
-                onClick={() => togglePasswordVisibility('confirmPassword')}
-                type="button"
-              >
-                {showPasswords.confirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </PasswordToggle>
-            </PasswordInput>
-          </SettingItem>
-
-          <ButtonGroup>
-            <Button
-              onClick={handleChangePassword}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              disabled={!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword || passwordStrength.score < 3}
-            >
-              <Key size={16} />
-              Change Password
-            </Button>
-          </ButtonGroup>
-        </SettingsCard>
+           <SettingItem>
+             <SettingInfo>
+               <SettingLabel>Password Security</SettingLabel>
+               <SettingDescription>Your password must meet security requirements</SettingDescription>
+             </SettingInfo>
+             <div style={{ fontSize: '12px', color: '#64748b' }}>
+               • At least 8 characters<br/>
+               • One uppercase letter<br/>
+               • One lowercase letter<br/>
+               • One number<br/>
+               • One special character
+             </div>
+           </SettingItem>
+         </SettingsCard>
 
         {/* Security Settings - Bottom Left */}
         <SettingsCard
@@ -1444,6 +1158,15 @@ const Settings = () => {
          onVerify={handlePasswordVerification}
          title="Verify Password"
          description="Enter your current password to save profile changes"
+         loading={modalLoading}
+         error={modalError}
+       />
+
+       {/* Password Change Modal */}
+       <PasswordChangeModal
+         isOpen={showPasswordChangeModal}
+         onClose={() => setShowPasswordChangeModal(false)}
+         onPasswordChange={handlePasswordChange}
          loading={modalLoading}
          error={modalError}
        />
