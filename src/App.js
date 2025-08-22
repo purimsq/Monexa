@@ -32,7 +32,7 @@ import './styles/GlobalStyles.css';
 const AppContainer = styled.div`
   display: flex;
   height: 100vh;
-  background-color: ${props => props.theme.colors.primary};
+  background-color: ${props => props.theme.colors.background || props.theme.colors.primary};
   font-family: 'Inter', sans-serif;
 `;
 
@@ -48,7 +48,7 @@ const ContentArea = styled.div`
   flex: 1;
   padding: 24px;
   overflow-y: auto;
-  background-color: ${props => props.theme.colors.primary};
+  background-color: ${props => props.theme.colors.background || props.theme.colors.primary};
   display: flex;
   gap: 24px;
 `;

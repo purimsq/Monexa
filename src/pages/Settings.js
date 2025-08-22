@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useTheme, fonts } from '../contexts/ThemeContext';
+import { useTheme, fonts, accentThemes } from '../contexts/ThemeContext';
 import apiService from '../services/api';
 import PasswordVerificationModal from '../components/PasswordVerificationModal';
 import PasswordChangeModal from '../components/PasswordChangeModal';
@@ -343,27 +343,45 @@ const ButtonGroup = styled.div`
 `;
 
 const ColorOption = styled.div`
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   cursor: pointer;
   border: 3px solid transparent;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
   &.active {
-    border-color: #1a1a1a;
-    transform: scale(1.1);
+    transform: scale(1.15);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
   }
 
   &:hover {
     transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover::after {
+    opacity: 1;
   }
 `;
 
 const ColorOptions = styled.div`
-  display: flex;
-  gap: 12px;
-  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 16px;
 `;
 
 const ProfileSection = styled.div`
@@ -536,7 +554,7 @@ const ModalDescription = styled.p`
 const Settings = () => {
   const navigate = useNavigate();
   const { user, updateProfile } = useAuth();
-  const { theme, themeName, toggleTheme, selectedFont, setSelectedFont } = useTheme();
+  const { theme, themeName, toggleTheme, selectedFont, setSelectedFont, selectedAccent, setSelectedAccent } = useTheme();
   
   const [settings, setSettings] = useState({
     // Profile Settings
@@ -770,10 +788,7 @@ const Settings = () => {
     });
   };
 
-  const accentColors = [
-    '#1a1a1a', '#3b82f6', '#10b981', '#f59e0b', 
-    '#ef4444', '#8b5cf6', '#06b6d4', '#f97316'
-  ];
+  // Remove the old accentColors array since we're using accentThemes now
 
   return (
           <Container theme={theme}>
@@ -1169,17 +1184,52 @@ const Settings = () => {
 
           <SettingItem>
             <SettingInfo>
-              <SettingLabel>Accent Color</SettingLabel>
-              <SettingDescription>Choose your accent color</SettingDescription>
+              <SettingLabel>Accent Theme</SettingLabel>
+              <SettingDescription>
+                Choose your color theme
+                {selectedAccent === 'default' && (
+                  <span style={{ 
+                    color: theme.colors.textTertiary, 
+                    fontSize: '11px',
+                    display: 'block',
+                    marginTop: '2px'
+                  }}>
+                    • Currently using default neutral theme
+                  </span>
+                )}
+              </SettingDescription>
             </SettingInfo>
             <ColorOptions>
-              {accentColors.map((color) => (
-                <ColorOption
-                  key={color}
-                  style={{ backgroundColor: color }}
-                  className={settings.accentColor === color ? 'active' : ''}
-                  onClick={() => handleSettingChange('accentColor', color)}
-                />
+              {Object.entries(accentThemes)
+                .filter(([key]) => key !== 'default') // Hide default theme from selection
+                .map(([key, accentTheme]) => (
+                <div key={key} style={{ textAlign: 'center' }}>
+                  <ColorOption
+                    style={{ 
+                      background: accentTheme.gradient,
+                      border: selectedAccent === key ? `3px solid ${theme.colors.textPrimary}` : '3px solid transparent'
+                    }}
+                    className={selectedAccent === key ? 'active' : ''}
+                    onClick={() => {
+                      // Toggle functionality: if already selected, go back to default
+                      if (selectedAccent === key) {
+                        setSelectedAccent('default');
+                      } else {
+                        setSelectedAccent(key);
+                      }
+                    }}
+                    title={`${accentTheme.name} - ${accentTheme.description}${selectedAccent === key ? ' (Click again to reset to default)' : ''}`}
+                  />
+                  <div style={{ 
+                    fontSize: '11px', 
+                    marginTop: '6px',
+                    color: theme.colors.textSecondary,
+                    fontWeight: selectedAccent === key ? '600' : '400',
+                    transition: 'all 0.2s ease'
+                  }}>
+                    {accentTheme.name}
+                  </div>
+                </div>
               ))}
             </ColorOptions>
           </SettingItem>

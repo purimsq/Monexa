@@ -56,27 +56,352 @@ export const fonts = {
   }
 };
 
-// Theme definitions
-const lightTheme = {
+// Accent Color Themes - 6 beautiful color mixes + default
+export const accentThemes = {
+  default: {
+    name: 'Default',
+    colors: ['#1a1a1a', '#333333', '#4a4a4a', '#666666'],
+    gradient: 'linear-gradient(135deg, #1a1a1a, #333333, #4a4a4a, #666666)',
+    description: 'Neutral and balanced',
+    light: {
+      primary: '#ffffff',
+      secondary: '#fafbfc',
+      tertiary: '#f8fafc',
+      background: '#ffffff',
+      textPrimary: '#0f172a',
+      textSecondary: '#475569',
+      textTertiary: '#64748b',
+      borderPrimary: '#e2e8f0',
+      borderSecondary: '#f1f5f9',
+      card: '#ffffff',
+      cardHover: '#fafbfc',
+      input: '#ffffff',
+      inputBorder: '#d1d5db',
+      buttonPrimary: '#1a1a1a',
+      buttonSecondary: '#f3f4f6',
+      buttonText: '#ffffff',
+      buttonTextSecondary: '#374151',
+      accent: '#1a1a1a',
+      accentHover: '#333333'
+    },
+    dark: {
+      primary: '#0f172a',
+      secondary: '#1e293b',
+      tertiary: '#334155',
+      background: '#0f172a',
+      textPrimary: '#f8fafc',
+      textSecondary: '#cbd5e1',
+      textTertiary: '#94a3b8',
+      borderPrimary: '#334155',
+      borderSecondary: '#475569',
+      card: '#1e293b',
+      cardHover: '#334155',
+      input: '#334155',
+      inputBorder: '#475569',
+      buttonPrimary: '#1a1a1a',
+      buttonSecondary: '#334155',
+      buttonText: '#ffffff',
+      buttonTextSecondary: '#f8fafc',
+      accent: '#1a1a1a',
+      accentHover: '#333333'
+    }
+  },
+  blue: {
+    name: 'Ocean Blue',
+    colors: ['#3b82f6', '#1d4ed8', '#60a5fa', '#1e40af'],
+    gradient: 'linear-gradient(135deg, #3b82f6, #1d4ed8, #60a5fa, #1e40af)',
+    description: 'Professional and calming',
+    light: {
+      primary: '#ffffff',
+      secondary: '#f8fafc',
+      tertiary: '#f1f5f9',
+      background: '#f0f8ff',
+      textPrimary: '#0f172a',
+      textSecondary: '#475569',
+      textTertiary: '#64748b',
+      borderPrimary: '#e2e8f0',
+      borderSecondary: '#f1f5f9',
+      card: '#ffffff',
+      cardHover: '#f8fafc',
+      input: '#ffffff',
+      inputBorder: '#d1d5db',
+      buttonPrimary: '#3b82f6',
+      buttonSecondary: '#f3f4f6',
+      buttonText: '#ffffff',
+      buttonTextSecondary: '#374151',
+      accent: '#3b82f6',
+      accentHover: '#1d4ed8'
+    },
+    dark: {
+      primary: '#0f172a',
+      secondary: '#1e293b',
+      tertiary: '#334155',
+      background: '#0a1a2e',
+      textPrimary: '#f8fafc',
+      textSecondary: '#cbd5e1',
+      textTertiary: '#94a3b8',
+      borderPrimary: '#334155',
+      borderSecondary: '#475569',
+      card: '#1e293b',
+      cardHover: '#334155',
+      input: '#334155',
+      inputBorder: '#475569',
+      buttonPrimary: '#3b82f6',
+      buttonSecondary: '#334155',
+      buttonText: '#ffffff',
+      buttonTextSecondary: '#f8fafc',
+      accent: '#3b82f6',
+      accentHover: '#1d4ed8'
+    }
+  },
+  green: {
+    name: 'Emerald Green',
+    colors: ['#10b981', '#059669', '#34d399', '#047857'],
+    gradient: 'linear-gradient(135deg, #10b981, #059669, #34d399, #047857)',
+    description: 'Fresh and natural',
+    light: {
+      primary: '#ffffff',
+      secondary: '#f0fdf4',
+      tertiary: '#ecfdf5',
+      background: '#f0fdf4',
+      textPrimary: '#0f172a',
+      textSecondary: '#475569',
+      textTertiary: '#64748b',
+      borderPrimary: '#d1fae5',
+      borderSecondary: '#ecfdf5',
+      card: '#ffffff',
+      cardHover: '#f0fdf4',
+      input: '#ffffff',
+      inputBorder: '#d1fae5',
+      buttonPrimary: '#10b981',
+      buttonSecondary: '#f3f4f6',
+      buttonText: '#ffffff',
+      buttonTextSecondary: '#374151',
+      accent: '#10b981',
+      accentHover: '#059669'
+    },
+    dark: {
+      primary: '#0f172a',
+      secondary: '#1e293b',
+      tertiary: '#334155',
+      background: '#0a1f0a',
+      textPrimary: '#f8fafc',
+      textSecondary: '#cbd5e1',
+      textTertiary: '#94a3b8',
+      borderPrimary: '#334155',
+      borderSecondary: '#475569',
+      card: '#1e293b',
+      cardHover: '#334155',
+      input: '#334155',
+      inputBorder: '#475569',
+      buttonPrimary: '#10b981',
+      buttonSecondary: '#334155',
+      buttonText: '#ffffff',
+      buttonTextSecondary: '#f8fafc',
+      accent: '#10b981',
+      accentHover: '#059669'
+    }
+  },
+  orange: {
+    name: 'Sunset Orange',
+    colors: ['#f97316', '#ea580c', '#fb923c', '#c2410c'],
+    gradient: 'linear-gradient(135deg, #f97316, #ea580c, #fb923c, #c2410c)',
+    description: 'Warm and energetic',
+    light: {
+      primary: '#ffffff',
+      secondary: '#fff7ed',
+      tertiary: '#ffedd5',
+      background: '#fff7ed',
+      textPrimary: '#0f172a',
+      textSecondary: '#475569',
+      textTertiary: '#64748b',
+      borderPrimary: '#fed7aa',
+      borderSecondary: '#ffedd5',
+      card: '#ffffff',
+      cardHover: '#fff7ed',
+      input: '#ffffff',
+      inputBorder: '#fed7aa',
+      buttonPrimary: '#f97316',
+      buttonSecondary: '#f3f4f6',
+      buttonText: '#ffffff',
+      buttonTextSecondary: '#374151',
+      accent: '#f97316',
+      accentHover: '#ea580c'
+    },
+    dark: {
+      primary: '#0f172a',
+      secondary: '#1e293b',
+      tertiary: '#334155',
+      background: '#1a0f0a',
+      textPrimary: '#f8fafc',
+      textSecondary: '#cbd5e1',
+      textTertiary: '#94a3b8',
+      borderPrimary: '#334155',
+      borderSecondary: '#475569',
+      card: '#1e293b',
+      cardHover: '#334155',
+      input: '#334155',
+      inputBorder: '#475569',
+      buttonPrimary: '#f97316',
+      buttonSecondary: '#334155',
+      buttonText: '#ffffff',
+      buttonTextSecondary: '#f8fafc',
+      accent: '#f97316',
+      accentHover: '#ea580c'
+    }
+  },
+  teal: {
+    name: 'Ocean Teal',
+    colors: ['#06b6d4', '#0891b2', '#22d3ee', '#0e7490'],
+    gradient: 'linear-gradient(135deg, #06b6d4, #0891b2, #22d3ee, #0e7490)',
+    description: 'Modern and refreshing',
+    light: {
+      primary: '#ffffff',
+      secondary: '#f0fdfa',
+      tertiary: '#ccfbf1',
+      background: '#f0fdfa',
+      textPrimary: '#0f172a',
+      textSecondary: '#475569',
+      textTertiary: '#64748b',
+      borderPrimary: '#99f6e4',
+      borderSecondary: '#ccfbf1',
+      card: '#ffffff',
+      cardHover: '#f0fdfa',
+      input: '#ffffff',
+      inputBorder: '#99f6e4',
+      buttonPrimary: '#06b6d4',
+      buttonSecondary: '#f3f4f6',
+      buttonText: '#ffffff',
+      buttonTextSecondary: '#374151',
+      accent: '#06b6d4',
+      accentHover: '#0891b2'
+    },
+    dark: {
+      primary: '#0f172a',
+      secondary: '#1e293b',
+      tertiary: '#334155',
+      background: '#0a1f1a',
+      textPrimary: '#f8fafc',
+      textSecondary: '#cbd5e1',
+      textTertiary: '#94a3b8',
+      borderPrimary: '#334155',
+      borderSecondary: '#475569',
+      card: '#1e293b',
+      cardHover: '#334155',
+      input: '#334155',
+      inputBorder: '#475569',
+      buttonPrimary: '#06b6d4',
+      buttonSecondary: '#334155',
+      buttonText: '#ffffff',
+      buttonTextSecondary: '#f8fafc',
+      accent: '#06b6d4',
+      accentHover: '#0891b2'
+    }
+  },
+  rose: {
+    name: 'Rose Pink',
+    colors: ['#f43f5e', '#e11d48', '#fb7185', '#be123c'],
+    gradient: 'linear-gradient(135deg, #f43f5e, #e11d48, #fb7185, #be123c)',
+    description: 'Elegant and vibrant',
+    light: {
+      primary: '#ffffff',
+      secondary: '#fff1f2',
+      tertiary: '#ffe4e6',
+      background: '#fff1f2',
+      textPrimary: '#0f172a',
+      textSecondary: '#475569',
+      textTertiary: '#64748b',
+      borderPrimary: '#fecdd3',
+      borderSecondary: '#ffe4e6',
+      card: '#ffffff',
+      cardHover: '#fff1f2',
+      input: '#ffffff',
+      inputBorder: '#fecdd3',
+      buttonPrimary: '#f43f5e',
+      buttonSecondary: '#f3f4f6',
+      buttonText: '#ffffff',
+      buttonTextSecondary: '#374151',
+      accent: '#f43f5e',
+      accentHover: '#e11d48'
+    },
+    dark: {
+      primary: '#0f172a',
+      secondary: '#1e293b',
+      tertiary: '#334155',
+      background: '#1a0f0f',
+      textPrimary: '#f8fafc',
+      textSecondary: '#cbd5e1',
+      textTertiary: '#94a3b8',
+      borderPrimary: '#334155',
+      borderSecondary: '#475569',
+      card: '#1e293b',
+      cardHover: '#334155',
+      input: '#334155',
+      inputBorder: '#475569',
+      buttonPrimary: '#f43f5e',
+      buttonSecondary: '#334155',
+      buttonText: '#ffffff',
+      buttonTextSecondary: '#f8fafc',
+      accent: '#f43f5e',
+      accentHover: '#e11d48'
+    }
+  },
+  amber: {
+    name: 'Golden Amber',
+    colors: ['#f59e0b', '#d97706', '#fbbf24', '#b45309'],
+    gradient: 'linear-gradient(135deg, #f59e0b, #d97706, #fbbf24, #b45309)',
+    description: 'Rich and luxurious',
+    light: {
+      primary: '#ffffff',
+      secondary: '#fffbeb',
+      tertiary: '#fef3c7',
+      background: '#fffbeb',
+      textPrimary: '#0f172a',
+      textSecondary: '#475569',
+      textTertiary: '#64748b',
+      borderPrimary: '#fde68a',
+      borderSecondary: '#fef3c7',
+      card: '#ffffff',
+      cardHover: '#fffbeb',
+      input: '#ffffff',
+      inputBorder: '#fde68a',
+      buttonPrimary: '#f59e0b',
+      buttonSecondary: '#f3f4f6',
+      buttonText: '#ffffff',
+      buttonTextSecondary: '#374151',
+      accent: '#f59e0b',
+      accentHover: '#d97706'
+    },
+    dark: {
+      primary: '#0f172a',
+      secondary: '#1e293b',
+      tertiary: '#334155',
+      background: '#1a150a',
+      textPrimary: '#f8fafc',
+      textSecondary: '#cbd5e1',
+      textTertiary: '#94a3b8',
+      borderPrimary: '#334155',
+      borderSecondary: '#475569',
+      card: '#1e293b',
+      cardHover: '#334155',
+      input: '#334155',
+      inputBorder: '#475569',
+      buttonPrimary: '#f59e0b',
+      buttonSecondary: '#334155',
+      buttonText: '#ffffff',
+      buttonTextSecondary: '#f8fafc',
+      accent: '#f59e0b',
+      accentHover: '#d97706'
+    }
+  }
+};
+
+// Base theme definitions (will be enhanced with accent colors)
+const createLightTheme = (accentTheme) => ({
   name: 'light',
   colors: {
-    // Background colors - Bright and clean
-    primary: '#ffffff',
-    secondary: '#fafbfc',
-    tertiary: '#f8fafc',
-    
-    // Text colors - High contrast for readability
-    textPrimary: '#0f172a',
-    textSecondary: '#475569',
-    textTertiary: '#64748b',
-    
-    // Border colors - Subtle but visible
-    borderPrimary: '#e2e8f0',
-    borderSecondary: '#f1f5f9',
-    
-    // Accent colors - Bold and vibrant
-    accent: '#1a1a1a',
-    accentHover: '#333333',
+    // Use the accent theme's light colors
+    ...accentTheme.light,
     
     // Status colors - Bright and clear
     success: '#059669',
@@ -88,21 +413,8 @@ const lightTheme = {
     shadow: 'rgba(0, 0, 0, 0.04)',
     shadowHover: 'rgba(0, 0, 0, 0.08)',
     
-    // Card colors - Pure white with subtle hover
-    card: '#ffffff',
-    cardHover: '#fafbfc',
-    
-    // Input colors - Clean and bright
-    input: '#ffffff',
+    // Input focus colors
     inputFocus: '#ffffff',
-    inputBorder: '#d1d5db',
-    inputFocusBorder: '#1a1a1a',
-    
-    // Button colors - High contrast
-    buttonPrimary: '#1a1a1a',
-    buttonSecondary: '#f3f4f6',
-    buttonText: '#ffffff',
-    buttonTextSecondary: '#374151',
   },
   shadows: {
     small: '0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)',
@@ -114,28 +426,13 @@ const lightTheme = {
     medium: '0.3s ease',
     slow: '0.5s ease',
   }
-};
+});
 
-const darkTheme = {
+const createDarkTheme = (accentTheme) => ({
   name: 'dark',
   colors: {
-    // Background colors
-    primary: '#0f172a',
-    secondary: '#1e293b',
-    tertiary: '#334155',
-    
-    // Text colors
-    textPrimary: '#f8fafc',
-    textSecondary: '#cbd5e1',
-    textTertiary: '#94a3b8',
-    
-    // Border colors
-    borderPrimary: '#334155',
-    borderSecondary: '#475569',
-    
-    // Accent colors
-    accent: '#3b82f6',
-    accentHover: '#60a5fa',
+    // Use the accent theme's dark colors
+    ...accentTheme.dark,
     
     // Status colors
     success: '#10b981',
@@ -147,21 +444,8 @@ const darkTheme = {
     shadow: 'rgba(0, 0, 0, 0.3)',
     shadowHover: 'rgba(0, 0, 0, 0.5)',
     
-    // Card colors
-    card: '#1e293b',
-    cardHover: '#334155',
-    
-    // Input colors
-    input: '#334155',
+    // Input focus colors
     inputFocus: '#475569',
-    inputBorder: '#475569',
-    inputFocusBorder: '#3b82f6',
-    
-    // Button colors
-    buttonPrimary: '#3b82f6',
-    buttonSecondary: '#334155',
-    buttonText: '#ffffff',
-    buttonTextSecondary: '#f8fafc',
   },
   shadows: {
     small: '0 2px 8px rgba(0, 0, 0, 0.3)',
@@ -173,7 +457,7 @@ const darkTheme = {
     medium: '0.3s ease',
     slow: '0.5s ease',
   }
-};
+});
 
 // Global styles for theme transitions
 const GlobalStyle = createGlobalStyle`
@@ -185,7 +469,7 @@ const GlobalStyle = createGlobalStyle`
   }
   
   body {
-    background-color: ${props => props.theme.colors.primary};
+    background-color: ${props => props.theme.colors.background || props.theme.colors.primary};
     color: ${props => props.theme.colors.textPrimary};
     transition: background-color ${props => props.theme.transitions.slow}, 
                 color ${props => props.theme.transitions.slow};
@@ -224,14 +508,17 @@ export const useTheme = () => {
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState('light');
   const [selectedFont, setSelectedFont] = useState('inter');
+  const [selectedAccent, setSelectedAccent] = useState('default');
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  // Load theme and font from localStorage on mount
+  // Load theme, font, and accent from localStorage on mount
   useEffect(() => {
     const savedTheme = localStorage.getItem('monexa-theme') || 'light';
     const savedFont = localStorage.getItem('monexa-font') || 'inter';
+    const savedAccent = localStorage.getItem('monexa-accent') || 'default';
     setTheme(savedTheme);
     setSelectedFont(savedFont);
+    setSelectedAccent(savedAccent);
   }, []);
 
   // Save theme to localStorage when it changes
@@ -243,6 +530,11 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('monexa-font', selectedFont);
   }, [selectedFont]);
+
+  // Save accent to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('monexa-accent', selectedAccent);
+  }, [selectedAccent]);
 
   const toggleTheme = async () => {
     setIsTransitioning(true);
@@ -272,7 +564,8 @@ export const ThemeProvider = ({ children }) => {
     }, 150);
   };
 
-  const currentTheme = theme === 'dark' ? darkTheme : lightTheme;
+  const currentAccent = accentThemes[selectedAccent];
+  const currentTheme = theme === 'dark' ? createDarkTheme(currentAccent) : createLightTheme(currentAccent);
   const currentFont = fonts[selectedFont];
 
   return (
@@ -282,6 +575,9 @@ export const ThemeProvider = ({ children }) => {
       selectedFont,
       currentFont,
       setSelectedFont,
+      selectedAccent,
+      currentAccent,
+      setSelectedAccent,
       toggleTheme, 
       isTransitioning 
     }}>
