@@ -13,7 +13,8 @@ router.put('/profile', verifyToken, [
     body('location').optional().trim(),
     body('experience').optional().trim(),
     body('bio').optional().trim(),
-    body('role').optional().trim()
+    body('role').optional().trim(),
+    body('currentPassword').exists().withMessage('Current password required for profile updates')
 ], async (req, res) => {
     try {
         const errors = validationResult(req);
@@ -25,7 +26,22 @@ router.put('/profile', verifyToken, [
             });
         }
 
-        const { name, phone, location, experience, bio, role } = req.body;
+        const { name, phone, location, experience, bio, role, currentPassword } = req.body;
+        
+        // Verify current password
+        const user = await database.get(
+            'SELECT password FROM users WHERE id = ?',
+            [req.user.id]
+        );
+
+        const passwordMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!passwordMatch) {
+            return res.status(400).json({
+                success: false,
+                error: 'Current password is incorrect'
+            });
+        }
+
         const updateFields = [];
         const updateValues = [];
 

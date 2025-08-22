@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monexa - Pension Scheme Management</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            overflow-x: hidden;
+        }
+
+        /* App Container */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            background-color: #ffffff;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            color: white;
+            padding: 0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 2rem 1.5rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: white;
+            text-align: center;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+        }
+
+        .nav-list {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin: 0.25rem 0;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left-color: #60a5fa;
+        }
+
+        .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-left-color: #60a5fa;
+        }
+
+        .nav-link i {
+            width: 20px;
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+        }
+
+        .quick-links {
+            margin-top: 2rem;
+            padding: 0 1.5rem;
+        }
+
+        .quick-links h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #f8fafc;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: white;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-container {
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 1rem;
+            color: #64748b;
+            z-index: 1;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            background-color: #f8fafc;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-details {
+            text-align: right;
+        }
+
+        .user-name {
+            display: block;
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.875rem;
+        }
+
+        .user-role {
+            display: block;
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-size: 1.25rem;
+        }
+
+        /* Page Content */
+        .page-content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            max-width: 1200px;
+        }
+
+        /* Cards */
+        .welcome-card {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .welcome-content h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-content p {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 1.5rem;
+        }
+
+        .young-man-illustration {
+            width: 120px;
+            height: 120px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+        }
+
+        .profile-card, .table-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        .profile-card h3, .table-card h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #1e293b;
+        }
+
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        .value {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .data-table th {
+            background-color: #f8fafc;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .data-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #f3f4f6;
+            color: #374151;
+        }
+
+        .data-table tbody tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: #f1f5f9;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e5e7eb;
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            color: #3b82f6;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-icon:hover {
+            background-color: #eff6ff;
+            color: #2563eb;
+        }
+
+        /* Badges */
+        .badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-pdf {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        /* Right Sidebar */
+        .right-sidebar {
+            width: 300px;
+            background-color: white;
+            border-left: 1px solid #e2e8f0;
+            padding: 2rem;
+        }
+
+        .balance-card {
+            background-color: #f8fafc;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .balance-card h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #1e293b;
+        }
+
+        .balance-items {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .balance-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background-color: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .currency {
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        .amount {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 1.125rem;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .toast {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #10b981;
+            animation: slideIn 0.3s ease;
+            max-width: 300px;
+        }
+
+        .toast.error {
+            border-left-color: #ef4444;
+        }
+
+        .toast.success {
+            border-left-color: #10b981;
+        }
+
+        .toast.warning {
+            border-left-color: #f59e0b;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Footer */
+        .footer {
+            background-color: white;
+            border-top: 1px solid #e2e8f0;
+            padding: 1rem 2rem;
+            text-align: center;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        /* Placeholder Content */
+        .placeholder-content {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #64748b;
+        }
+
+        .placeholder-content h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #1e293b;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .right-sidebar {
+                width: 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 240px;
+            }
+            
+            .right-sidebar {
+                display: none;
+            }
+            
+            .top-bar {
+                padding: 1rem;
+            }
+            
+            .page-content {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="logo">Monexa</h1>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="nav-item active">
+                        <a href="#dashboard" class="nav-link" data-page="dashboard">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#profile" class="nav-link" data-page="profile">
+                            <i class="fas fa-user"></i>
+                            <span>Profile</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#account" class="nav-link" data-page="account">
+                            <i class="fas fa-credit-card"></i>
+                            <span>My Account</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#history" class="nav-link" data-page="history">
+                            <i class="fas fa-history"></i>
+                            <span>Payment History</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#beneficiaries" class="nav-link" data-page="beneficiaries">
+                            <i class="fas fa-users"></i>
+                            <span>Beneficiaries</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#documents" class="nav-link" data-page="documents">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Documents</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#applications" class="nav-link" data-page="applications">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span>Applications</span>
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="quick-links">
+                    <h3>Quick Links</h3>
+                    <ul class="nav-list">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link">
+                                <i class="fab fa-paypal"></i>
+                                <span>PayPal</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link">
+                                <i class="fas fa-credit-card"></i>
+                                <span>Payoneer</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link">
+                                <i class="fas fa-university"></i>
+                                <span>CIS Bank</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <div class="search-container">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search..." class="search-input">
+                    </div>
+                </div>
+                
+                <div class="user-info">
+                    <div class="user-details">
+                        <span class="user-name">Soham Miles</span>
+                        <span class="user-role">Doctor</span>
+                    </div>
+                    <div class="user-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="page-content">
+                <!-- Dashboard Page -->
+                <div id="dashboard" class="page active">
+                    <div class="dashboard-grid">
+                        <!-- Welcome Card -->
+                        <div class="welcome-card">
+                            <div class="welcome-content">
+                                <h2>Welcome to Monexa</h2>
+                                <p>The best place for pension scheme</p>
+                                <button class="btn btn-primary" onclick="showToast('Learn More feature coming soon!', 'info')">Learn More</button>
+                            </div>
+                            <div class="welcome-image">
+                                <div class="young-man-illustration">
+                                    <i class="fas fa-user-tie"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User Profile Card -->
+                        <div class="profile-card">
+                            <h3>User Profile</h3>
+                            <div class="profile-info">
+                                <div class="info-row">
+                                    <span class="label">Name:</span>
+                                    <span class="value">Dylen Muiruri</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="label">Date of Joining:</span>
+                                    <span class="value">February 1st 2006</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="label">Marital Status:</span>
+                                    <span class="value">Single</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="label">Address:</span>
+                                    <span class="value">Nairobi, Westlands, Kenya</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contribution History -->
+                        <div class="table-card">
+                            <h3>Contribution History</h3>
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Employee</th>
+                                            <th>Employer</th>
+                                            <th>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Aug 03, 2019</td>
+                                            <td>Theresa Mckinney</td>
+                                            <td>Hal Richardson</td>
+                                            <td>$600</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Sep 15, 2019</td>
+                                            <td>John Smith</td>
+                                            <td>Tech Corp</td>
+                                            <td>$750</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Oct 22, 2019</td>
+                                            <td>Sarah Johnson</td>
+                                            <td>Global Inc</td>
+                                            <td>$800</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Nov 08, 2019</td>
+                                            <td>Mike Wilson</td>
+                                            <td>Finance Ltd</td>
+                                            <td>$650</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Documents -->
+                        <div class="table-card">
+                            <div class="table-header">
+                                <h3>Documents</h3>
+                                <button class="btn btn-secondary upload-btn" onclick="handleUpload()">
+                                    <i class="fas fa-upload"></i>
+                                    Upload
+                                </button>
+                            </div>
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Date</th>
+                                            <th>Type</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Passport Scan</td>
+                                            <td>Jan 15, 2020</td>
+                                            <td><span class="badge badge-pdf">PDF</span></td>
+                                            <td>
+                                                <button class="btn-icon" onclick="downloadDocument('passport')">
+                                                    <i class="fas fa-download"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Photo</td>
+                                            <td>Jan 20, 2020</td>
+                                            <td><span class="badge badge-pdf">PDF</span></td>
+                                            <td>
+                                                <button class="btn-icon" onclick="downloadDocument('photo')">
+                                                    <i class="fas fa-download"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Insurance Scan</td>
+                                            <td>Feb 05, 2020</td>
+                                            <td><span class="badge badge-pdf">PDF</span></td>
+                                            <td>
+                                                <button class="btn-icon" onclick="downloadDocument('insurance')">
+                                                    <i class="fas fa-download"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>ID Card</td>
+                                            <td>Feb 12, 2020</td>
+                                            <td><span class="badge badge-pdf">PDF</span></td>
+                                            <td>
+                                                <button class="btn-icon" onclick="downloadDocument('id')">
+                                                    <i class="fas fa-download"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other Pages (Placeholder) -->
+                <div id="profile" class="page">
+                    <div class="placeholder-content">
+                        <h2>Profile Page</h2>
+                        <p>Profile management features coming soon...</p>
+                    </div>
+                </div>
+
+                <div id="account" class="page">
+                    <div class="placeholder-content">
+                        <h2>My Account</h2>
+                        <p>Account management features coming soon...</p>
+                    </div>
+                </div>
+
+                <div id="history" class="page">
+                    <div class="placeholder-content">
+                        <h2>Payment History</h2>
+                        <p>Payment history features coming soon...</p>
+                    </div>
+                </div>
+
+                <div id="beneficiaries" class="page">
+                    <div class="placeholder-content">
+                        <h2>Beneficiaries</h2>
+                        <p>Beneficiary management features coming soon...</p>
+                    </div>
+                </div>
+
+                <div id="documents" class="page">
+                    <div class="placeholder-content">
+                        <h2>Documents</h2>
+                        <p>Document management features coming soon...</p>
+                    </div>
+                </div>
+
+                <div id="applications" class="page">
+                    <div class="placeholder-content">
+                        <h2>Applications</h2>
+                        <p>Application management features coming soon...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar - Account Balance -->
+            <aside class="right-sidebar">
+                <div class="balance-card">
+                    <h3>Account Balance</h3>
+                    <div class="balance-items">
+                        <div class="balance-item">
+                            <span class="currency">Dollar</span>
+                            <span class="amount">$20,000.00</span>
+                        </div>
+                        <div class="balance-item">
+                            <span class="currency">Euro</span>
+                            <span class="amount">€20,000.00</span>
+                        </div>
+                        <div class="balance-item">
+                            <span class="currency">Pound</span>
+                            <span class="amount">£20,000.00</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <span>Last update: April 18, 2020</span>
+    </footer>
+
+    <script>
+        // Monexa Application - Simple Browser Version
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            setupNavigation();
+            setupSearch();
+            setupEventListeners();
+            
+            setTimeout(() => {
+                showToast('Welcome to Monexa!', 'success');
+            }, 1000);
+        }
+
+        function setupNavigation() {
+            const navLinks = document.querySelectorAll('.nav-link[data-page]');
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const targetPage = this.getAttribute('data-page');
+                    navigateToPage(targetPage);
+                });
+            });
+        }
+
+        function navigateToPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            const targetPage = document.getElementById(pageId);
+            const targetNavItem = document.querySelector(`[data-page="${pageId}"]`).parentElement;
+            
+            if (targetPage) {
+                targetPage.classList.add('active');
+                targetNavItem.classList.add('active');
+                showToast(`Navigated to ${pageId.charAt(0).toUpperCase() + pageId.slice(1)}`, 'success');
+            }
+        }
+
+        function setupSearch() {
+            const searchInput = document.querySelector('.search-input');
+            
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    const query = e.target.value.toLowerCase();
+                    
+                    if (query.length > 2) {
+                        showToast(`Searching for "${query}"...`, 'info');
+                    }
+                });
+                
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        const query = e.target.value;
+                        if (query.trim()) {
+                            showToast(`Search completed for "${query}"`, 'success');
+                        }
+                    }
+                });
+            }
+        }
+
+        function setupEventListeners() {
+            const cards = document.querySelectorAll('.profile-card, .table-card, .balance-card');
+            
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+                });
+            });
+        }
+
+        function handleUpload() {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png';
+            fileInput.style.display = 'none';
+            
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    showToast('Uploading file...', 'info');
+                    
+                    setTimeout(() => {
+                        showToast(`File "${file.name}" uploaded successfully!`, 'success');
+                        addDocumentRow(file.name);
+                    }, 2000);
+                }
+            });
+            
+            document.body.appendChild(fileInput);
+            fileInput.click();
+            document.body.removeChild(fileInput);
+        }
+
+        function downloadDocument(documentType) {
+            showToast(`Downloading ${documentType} document...`, 'info');
+            
+            setTimeout(() => {
+                showToast(`${documentType.charAt(0).toUpperCase() + documentType.slice(1)} document downloaded successfully!`, 'success');
+            }, 1500);
+        }
+
+        function addDocumentRow(fileName) {
+            const tbody = document.querySelector('.data-table tbody');
+            const newRow = document.createElement('tr');
+            
+            const currentDate = new Date().toLocaleDateString('en-US', {
+                month: 'short',
+                day: '2-digit',
+                year: 'numeric'
+            });
+            
+            newRow.innerHTML = `
+                <td>${fileName}</td>
+                <td>${currentDate}</td>
+                <td><span class="badge badge-pdf">PDF</span></td>
+                <td>
+                    <button class="btn-icon" onclick="downloadDocument('${fileName}')">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </td>
+            `;
+            
+            tbody.appendChild(newRow);
+            
+            newRow.style.opacity = '0';
+            newRow.style.transform = 'translateY(-10px)';
+            
+            setTimeout(() => {
+                newRow.style.transition = 'all 0.3s ease';
+                newRow.style.opacity = '1';
+                newRow.style.transform = 'translateY(0)';
+            }, 100);
+        }
+
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toast-container');
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: #64748b; cursor: pointer; padding: 0.25rem; border-radius: 4px; transition: all 0.3s ease;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.style.transition = 'all 0.3s ease';
+                    toast.style.transform = 'translateX(100%)';
+                    toast.style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        if (toast.parentElement) {
+                            toast.remove();
+                        }
+                    }, 300);
+                }
+            }, 5000);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                const searchInput = document.querySelector('.search-input');
+                if (searchInput) {
+                    searchInput.focus();
+                }
+            }
+            
+            if (e.key === 'Escape') {
+                const searchInput = document.querySelector('.search-input');
+                if (searchInput && document.activeElement === searchInput) {
+                    searchInput.value = '';
+                    searchInput.blur();
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

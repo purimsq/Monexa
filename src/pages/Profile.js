@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { User, Edit, Save, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import PasswordVerificationModal from '../components/PasswordVerificationModal';
 
 const Container = styled.div`
   max-width: 800px;
@@ -200,6 +201,11 @@ const Profile = () => {
     bio: ''
   });
 
+  // Modal state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [modalError, setModalError] = useState(null);
+
   // Initialize form data with user information
   useEffect(() => {
     if (user) {
@@ -219,27 +225,39 @@ const Profile = () => {
     setIsEditing(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
+    setModalError(null);
+    setShowPasswordModal(true);
+  };
+
+  const handlePasswordVerification = async (password) => {
+    setModalLoading(true);
+    setModalError(null);
+
     try {
-      const result = await updateProfile(formData);
+      const profileData = {
+        ...formData,
+        currentPassword: password
+      };
+      
+      const result = await updateProfile(profileData);
       
       if (result.success) {
+        setShowPasswordModal(false);
+        setModalLoading(false);
         setIsEditing(false);
+        
         toast.success('Profile updated successfully!', {
           position: "bottom-right",
           autoClose: 3000,
         });
       } else {
-        toast.error(result.error || 'Failed to update profile', {
-          position: "bottom-right",
-          autoClose: 4000,
-        });
+        setModalError(result.error || 'Failed to update profile');
+        setModalLoading(false);
       }
     } catch (error) {
-      toast.error('An error occurred while updating profile', {
-        position: "bottom-right",
-        autoClose: 4000,
-      });
+      setModalError('An error occurred while updating profile');
+      setModalLoading(false);
     }
   };
 
@@ -368,6 +386,17 @@ const Profile = () => {
           </ButtonGroup>
         )}
       </ProfileCard>
+
+      {/* Password Verification Modal */}
+      <PasswordVerificationModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+        onVerify={handlePasswordVerification}
+        title="Verify Password"
+        description="Enter your current password to save profile changes"
+        loading={modalLoading}
+        error={modalError}
+      />
     </Container>
   );
 };
