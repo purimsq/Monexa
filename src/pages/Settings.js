@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import apiService from '../services/api';
 import PasswordVerificationModal from '../components/PasswordVerificationModal';
 import PasswordChangeModal from '../components/PasswordChangeModal';
@@ -28,6 +29,8 @@ const Container = styled.div`
   max-width: 1800px;
   margin: 0 auto;
   padding: 32px;
+  background-color: ${props => props.theme.colors.primary};
+  color: ${props => props.theme.colors.textPrimary};
 `;
 
 const Header = styled.div`
@@ -46,20 +49,20 @@ const BackButton = styled(motion.button)`
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #64748b;
+  color: ${props => props.theme.colors.textSecondary};
   font-weight: 600;
   transition: all 0.2s ease;
 
   &:hover {
-    background: #f1f5f9;
-    color: #1e293b;
+    background: ${props => props.theme.colors.tertiary};
+    color: ${props => props.theme.colors.textPrimary};
   }
 `;
 
 const Title = styled.h1`
   font-size: 28px;
   font-weight: 700;
-  color: #1e293b;
+  color: ${props => props.theme.colors.textPrimary};
   margin: 0;
   display: flex;
   align-items: center;
@@ -78,11 +81,11 @@ const SettingsGrid = styled.div`
 `;
 
 const SettingsCard = styled(motion.div)`
-  background: white;
+  background: ${props => props.theme.colors.card};
   border-radius: 20px;
   padding: 40px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
-  border: 1px solid #f1f5f9;
+  box-shadow: ${props => props.theme.shadows.medium};
+  border: 1px solid ${props => props.theme.colors.borderSecondary};
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -95,7 +98,7 @@ const SettingsCard = styled(motion.div)`
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(135deg, #1a1a1a, #333333);
+    background: linear-gradient(135deg, ${props => props.theme.colors.accent}, ${props => props.theme.colors.accentHover});
     opacity: 0;
     transition: opacity 0.3s ease;
   }
@@ -515,13 +518,13 @@ const ModalIcon = styled.div`
 const ModalTitle = styled.h2`
   font-size: 24px;
   font-weight: 700;
-  color: #1e293b;
+  color: ${props => props.theme.colors.textPrimary};
   margin: 0 0 8px 0;
 `;
 
 const ModalDescription = styled.p`
   font-size: 14px;
-  color: #64748b;
+  color: ${props => props.theme.colors.textSecondary};
   margin: 0;
   line-height: 1.5;
 `;
@@ -533,6 +536,7 @@ const ModalDescription = styled.p`
 const Settings = () => {
   const navigate = useNavigate();
   const { user, updateProfile } = useAuth();
+  const { theme, themeName, toggleTheme } = useTheme();
   
   const [settings, setSettings] = useState({
     // Profile Settings
@@ -772,21 +776,22 @@ const Settings = () => {
   ];
 
   return (
-    <Container>
-      <Header>
-        <BackButton
-          onClick={() => navigate(-1)}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <ArrowLeft size={20} />
-          Back
-        </BackButton>
-        <Title>
-          <SettingsIcon size={28} />
-          Settings
-        </Title>
-      </Header>
+          <Container theme={theme}>
+              <Header>
+          <BackButton
+            theme={theme}
+            onClick={() => navigate(-1)}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <ArrowLeft size={20} />
+            Back
+          </BackButton>
+          <Title theme={theme}>
+            <SettingsIcon size={28} />
+            Settings
+          </Title>
+        </Header>
 
       <style>{shimmerAnimation}</style>
       <SettingsGrid>
@@ -796,6 +801,7 @@ const Settings = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
+          theme={theme}
         >
           <CardHeader>
             <CardIcon>
@@ -870,11 +876,12 @@ const Settings = () => {
         </SettingsCard>
 
                  {/* Password Management - Top Right */}
-         <SettingsCard
-           initial={{ opacity: 0, y: 30 }}
-           animate={{ opacity: 1, y: 0 }}
-           transition={{ duration: 0.5, delay: 0.1 }}
-         >
+                 <SettingsCard
+          theme={theme}
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
            <CardHeader>
              <CardIcon>
                <Key size={20} />
@@ -914,6 +921,7 @@ const Settings = () => {
 
         {/* Security Settings - Bottom Left */}
         <SettingsCard
+          theme={theme}
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
@@ -990,6 +998,7 @@ const Settings = () => {
 
         {/* Payment Settings - Bottom Right */}
         <SettingsCard
+          theme={theme}
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
@@ -1050,6 +1059,7 @@ const Settings = () => {
 
         {/* Notifications - Third Row Left */}
         <SettingsCard
+          theme={theme}
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
@@ -1124,6 +1134,7 @@ const Settings = () => {
 
         {/* Appearance Settings - Third Row Right */}
         <SettingsCard
+          theme={theme}
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.5 }}
@@ -1141,12 +1152,18 @@ const Settings = () => {
               <SettingDescription>Choose your preferred theme</SettingDescription>
             </SettingInfo>
             <Select
-              value={settings.theme}
-              onChange={(e) => handleSettingChange('theme', e.target.value)}
+              value={themeName}
+              onChange={(e) => {
+                const newTheme = e.target.value;
+                if (newTheme === 'dark') {
+                  toggleTheme();
+                } else if (newTheme === 'light' && themeName === 'dark') {
+                  toggleTheme();
+                }
+              }}
             >
               <option value="light">Light</option>
               <option value="dark">Dark</option>
-              <option value="auto">Auto</option>
             </Select>
           </SettingItem>
 
@@ -1185,6 +1202,7 @@ const Settings = () => {
 
         {/* Privacy & Data - Fourth Row Left */}
         <SettingsCard
+          theme={theme}
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.6 }}
@@ -1302,13 +1320,14 @@ const Settings = () => {
         <SessionManagementModal
           isOpen={showSessionModal}
           onClose={() => setShowSessionModal(false)}
+          theme={theme}
         />
       </Container>
     );
   };
 
 // Session Management Modal Component
-const SessionManagementModal = ({ isOpen, onClose }) => {
+const SessionManagementModal = ({ isOpen, onClose, theme }) => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [revoking, setRevoking] = useState(false);
@@ -1436,8 +1455,8 @@ const SessionManagementModal = ({ isOpen, onClose }) => {
             <Monitor size={20} />
           </ModalIcon>
           <div>
-            <ModalTitle>Session Management</ModalTitle>
-            <ModalDescription>
+            <ModalTitle theme={theme}>Session Management</ModalTitle>
+            <ModalDescription theme={theme}>
               Manage your logged-in devices and sessions
             </ModalDescription>
           </div>

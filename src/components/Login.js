@@ -414,6 +414,7 @@ const Login = ({ onSwitchToSignup }) => {
                   onChange={handle2FAInputChange}
                   maxLength={6}
                   autoFocus
+                  autoComplete="off"
                 />
               </InputContainer>
               {errors.twoFactor && <ErrorMessage>{errors.twoFactor}</ErrorMessage>}
@@ -460,6 +461,7 @@ const Login = ({ onSwitchToSignup }) => {
               value={formData.email}
               onChange={handleInputChange}
               required
+              autoComplete="off"
             />
           </InputContainer>
           {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
@@ -478,6 +480,7 @@ const Login = ({ onSwitchToSignup }) => {
               value={formData.password}
               onChange={handleInputChange}
               required
+              autoComplete="off"
             />
             <PasswordToggle
               type="button"

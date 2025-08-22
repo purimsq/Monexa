@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { 
   LayoutDashboard, 
   User, 
@@ -16,12 +17,12 @@ import {
 
 const SidebarContainer = styled(motion.div)`
   width: 280px;
-  background: #ffffff;
-  color: #000000;
+  background: ${props => props.theme.colors.card};
+  color: ${props => props.theme.colors.textPrimary};
   padding: 24px 0;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: ${props => props.theme.shadows.medium};
   border-radius: 0 24px 24px 0;
   height: 100vh;
   position: fixed;
@@ -32,14 +33,14 @@ const SidebarContainer = styled(motion.div)`
 
 const LogoSection = styled.div`
   padding: 0 24px 32px 24px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid ${props => props.theme.colors.borderPrimary};
   margin-bottom: 24px;
 `;
 
 const LogoText = styled.h2`
   font-size: 28px;
   font-weight: 700;
-  background: linear-gradient(135deg, #000000 0%, #333333 100%);
+  background: linear-gradient(135deg, ${props => props.theme.colors.accent} 0%, ${props => props.theme.colors.accentHover} 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -48,7 +49,7 @@ const LogoText = styled.h2`
 
 const LogoSubtitle = styled.p`
   font-size: 12px;
-  color: #666666;
+  color: ${props => props.theme.colors.textSecondary};
   margin: 4px 0 0 0;
   font-weight: 400;
 `;
@@ -61,7 +62,7 @@ const NavSection = styled.div`
 const SectionTitle = styled.h3`
   font-size: 12px;
   font-weight: 600;
-  color: #666666;
+  color: ${props => props.theme.colors.textSecondary};
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin: 0 0 16px 8px;
@@ -74,7 +75,7 @@ const NavItem = styled(NavLink)`
   padding: 12px 16px;
   margin-bottom: 4px;
   border-radius: 12px;
-  color: #333333;
+  color: ${props => props.theme.colors.textSecondary};
   text-decoration: none;
   font-weight: 500;
   font-size: 14px;
@@ -82,15 +83,15 @@ const NavItem = styled(NavLink)`
   position: relative;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.05);
-    color: #000000;
+    background: ${props => props.theme.colors.tertiary};
+    color: ${props => props.theme.colors.textPrimary};
     transform: translateX(4px);
   }
 
   &.active {
-    background: rgba(0, 0, 0, 0.1);
-    color: #000000;
-    border-left: 3px solid #000000;
+    background: ${props => props.theme.colors.tertiary};
+    color: ${props => props.theme.colors.textPrimary};
+    border-left: 3px solid ${props => props.theme.colors.accent};
     padding-left: 13px;
   }
 
@@ -108,15 +109,15 @@ const QuickLink = styled.a`
   padding: 12px 16px;
   margin-bottom: 4px;
   border-radius: 12px;
-  color: #333333;
+  color: ${props => props.theme.colors.textSecondary};
   text-decoration: none;
   font-weight: 500;
   font-size: 14px;
   transition: all 0.2s ease;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.05);
-    color: #000000;
+    background: ${props => props.theme.colors.tertiary};
+    color: ${props => props.theme.colors.textPrimary};
     transform: translateX(4px);
   }
 
@@ -145,25 +146,28 @@ const quickLinks = [
 
 function Sidebar() {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const firstName = user?.name?.split(' ')[0] || 'User';
   
   return (
     <SidebarContainer
+      theme={theme}
       initial={{ x: -280 }}
       animate={{ x: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
     >
-      <LogoSection>
-        <LogoText>Monexa</LogoText>
-        <LogoSubtitle>{firstName}'s Music Studio</LogoSubtitle>
+      <LogoSection theme={theme}>
+        <LogoText theme={theme}>Monexa</LogoText>
+        <LogoSubtitle theme={theme}>{firstName}'s Music Studio</LogoSubtitle>
       </LogoSection>
 
-                   <NavSection>
-               <SectionTitle>Studio Menu</SectionTitle>
+                         <NavSection>
+        <SectionTitle theme={theme}>Studio Menu</SectionTitle>
         {navigationItems.map((item) => (
           <NavItem
             key={item.path}
             to={item.path}
+            theme={theme}
             className={({ isActive }) => isActive ? 'active' : ''}
           >
             <item.icon />
@@ -172,10 +176,10 @@ function Sidebar() {
         ))}
       </NavSection>
 
-                   <NavSection>
-               <SectionTitle>Music Platforms</SectionTitle>
+                         <NavSection>
+        <SectionTitle theme={theme}>Music Platforms</SectionTitle>
         {quickLinks.map((link) => (
-          <QuickLink key={link.label} href={link.href}>
+          <QuickLink key={link.label} href={link.href} theme={theme}>
             <link.icon />
             {link.label}
           </QuickLink>

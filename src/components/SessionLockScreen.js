@@ -248,6 +248,7 @@ const SessionLockScreen = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   className={error ? 'error' : ''}
+                  autoComplete="off"
                 />
               </InputGroup>
 
@@ -259,6 +260,7 @@ const SessionLockScreen = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   className={error ? 'error' : ''}
+                  autoComplete="off"
                 />
                 <PasswordToggle
                   type="button"
@@ -278,6 +280,7 @@ const SessionLockScreen = () => {
                 required
                 className={error ? 'error' : ''}
                 maxLength={6}
+                autoComplete="off"
               />
             </InputGroup>
           )}

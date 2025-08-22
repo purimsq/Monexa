@@ -4,16 +4,17 @@ import { motion } from 'framer-motion';
 import { Search, Bell, Settings, ChevronDown, LogOut, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { toast } from 'react-toastify';
 
 const TopBarContainer = styled.div`
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  background: ${props => props.theme.colors.card};
+  border-bottom: 1px solid ${props => props.theme.colors.borderPrimary};
   padding: 16px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: ${props => props.theme.shadows.small};
 `;
 
 const LeftSection = styled.div`
@@ -24,13 +25,13 @@ const LeftSection = styled.div`
        const AppName = styled.h1`
          font-size: 24px;
          font-weight: 700;
-         color: #1e293b;
+         color: ${props => props.theme.colors.textPrimary};
          margin: 0;
        `;
 
        const AppSubtitle = styled.p`
          font-size: 12px;
-         color: #64748b;
+         color: ${props => props.theme.colors.textSecondary};
          margin: 0;
          font-weight: 400;
        `;
@@ -43,22 +44,22 @@ const SearchContainer = styled.div`
 const SearchInput = styled.input`
   width: 400px;
   padding: 12px 16px 12px 48px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid ${props => props.theme.colors.inputBorder};
   border-radius: 12px;
-  background: #f8fafc;
+  background: ${props => props.theme.colors.input};
   font-size: 14px;
-  color: #1e293b;
+  color: ${props => props.theme.colors.textPrimary};
   outline: none;
   transition: all 0.2s ease;
 
   &::placeholder {
-    color: #94a3b8;
+    color: ${props => props.theme.colors.textTertiary};
   }
 
   &:focus {
-    border-color: #3b82f6;
-    background: #ffffff;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: ${props => props.theme.colors.inputFocusBorder};
+    background: ${props => props.theme.colors.inputFocus};
+    box-shadow: 0 0 0 3px ${props => props.theme.colors.inputFocusBorder}20;
   }
 `;
 
@@ -67,7 +68,7 @@ const SearchIcon = styled(Search)`
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: #94a3b8;
+  color: ${props => props.theme.colors.textTertiary};
   width: 20px;
   height: 20px;
 `;
@@ -84,7 +85,7 @@ const IconButton = styled(motion.button)`
   padding: 8px;
   border-radius: 8px;
   cursor: pointer;
-  color: #64748b;
+  color: ${props => props.theme.colors.textSecondary};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -92,8 +93,8 @@ const IconButton = styled(motion.button)`
   transition: all 0.2s ease;
 
   &:hover {
-    background: #f1f5f9;
-    color: #1e293b;
+    background: ${props => props.theme.colors.tertiary};
+    color: ${props => props.theme.colors.textPrimary};
   }
 `;
 
@@ -215,6 +216,7 @@ const UserRole = styled.span`
 function TopBar() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { theme } = useTheme();
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -252,18 +254,19 @@ function TopBar() {
   };
   
   return (
-    <TopBarContainer>
+    <TopBarContainer theme={theme}>
       <LeftSection>
-        <AppName>Monexa</AppName>
-        <AppSubtitle>{user?.name || 'User'}'s Music Studio</AppSubtitle>
+        <AppName theme={theme}>Monexa</AppName>
+        <AppSubtitle theme={theme}>{user?.name || 'User'}'s Music Studio</AppSubtitle>
         <SearchContainer>
-          <SearchIcon />
-          <SearchInput placeholder="Search beats, clients, sales..." />
+          <SearchIcon theme={theme} />
+          <SearchInput theme={theme} placeholder="Search beats, clients, sales..." />
         </SearchContainer>
       </LeftSection>
 
       <RightSection>
         <IconButton
+          theme={theme}
           onClick={() => navigate('/notifications')}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -273,6 +276,7 @@ function TopBar() {
         </IconButton>
 
         <IconButton
+          theme={theme}
           onClick={() => navigate('/settings')}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}

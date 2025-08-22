@@ -6,6 +6,7 @@ import styled from 'styled-components';
 
 // Auth
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import Auth from './components/Auth';
 import SessionLockScreen from './components/SessionLockScreen';
 import SessionTimeoutIndicator from './components/SessionTimeoutIndicator';
@@ -31,7 +32,7 @@ import './styles/GlobalStyles.css';
 const AppContainer = styled.div`
   display: flex;
   height: 100vh;
-  background-color: #f8fafc;
+  background-color: ${props => props.theme.colors.primary};
   font-family: 'Inter', sans-serif;
 `;
 
@@ -47,7 +48,7 @@ const ContentArea = styled.div`
   flex: 1;
   padding: 24px;
   overflow-y: auto;
-  background-color: #f8fafc;
+  background-color: ${props => props.theme.colors.primary};
   display: flex;
   gap: 24px;
 `;
@@ -68,10 +69,11 @@ const RightColumn = styled.div`
 
 function AppContent() {
   const location = useLocation();
+  const { theme } = useTheme();
   const isDashboard = location.pathname === '/' || location.pathname === '/dashboard';
 
   return (
-    <ContentArea>
+    <ContentArea theme={theme}>
       <MainColumn>
         <Routes>
           <Route path="/" element={<Dashboard />} />
@@ -98,8 +100,10 @@ function AppContent() {
 }
 
 function AuthenticatedApp() {
+  const { theme } = useTheme();
+  
   return (
-    <AppContainer>
+    <AppContainer theme={theme}>
       <Sidebar />
       <MainContent>
         <TopBar />
@@ -143,32 +147,34 @@ function AppRouter() {
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <AppRouter />
-        
-        {/* Toast Notifications */}
-        <ToastContainer
-          position="bottom-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="light"
-          toastStyle={{
-            backgroundColor: '#ffffff',
-            color: '#1e293b',
-            borderRadius: '12px',
-            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-            border: '1px solid #e2e8f0'
-          }}
-        />
-      </Router>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <AppRouter />
+          
+          {/* Toast Notifications */}
+          <ToastContainer
+            position="bottom-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="light"
+            toastStyle={{
+              backgroundColor: '#ffffff',
+              color: '#1e293b',
+              borderRadius: '12px',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+              border: '1px solid #e2e8f0'
+            }}
+          />
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Eye, EyeOff, Lock } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
 
 const ModalOverlay = styled(motion.div)`
   position: fixed;
@@ -18,12 +19,12 @@ const ModalOverlay = styled(motion.div)`
 `;
 
 const ModalContent = styled(motion.div)`
-  background: white;
+  background: ${props => props.theme.colors.card};
   border-radius: 20px;
   padding: 32px;
   max-width: 400px;
   width: 100%;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: ${props => props.theme.shadows.large};
   position: relative;
 `;
 
@@ -33,7 +34,7 @@ const ModalHeader = styled.div`
   gap: 12px;
   margin-bottom: 24px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid ${props => props.theme.colors.borderPrimary};
 `;
 
 const ModalIcon = styled.div`
@@ -51,13 +52,13 @@ const ModalIcon = styled.div`
 const ModalTitle = styled.h3`
   font-size: 18px;
   font-weight: 600;
-  color: #1e293b;
+  color: ${props => props.theme.colors.textPrimary};
   margin: 0;
 `;
 
 const ModalDescription = styled.p`
   font-size: 14px;
-  color: #64748b;
+  color: ${props => props.theme.colors.textSecondary};
   margin: 0;
   line-height: 1.5;
 `;
@@ -68,15 +69,15 @@ const CloseButton = styled.button`
   right: 16px;
   background: none;
   border: none;
-  color: #64748b;
+  color: ${props => props.theme.colors.textSecondary};
   cursor: pointer;
   padding: 8px;
   border-radius: 8px;
   transition: all 0.2s ease;
 
   &:hover {
-    background: #f1f5f9;
-    color: #1e293b;
+    background: ${props => props.theme.colors.tertiary};
+    color: ${props => props.theme.colors.textPrimary};
   }
 `;
 
@@ -89,11 +90,11 @@ const Input = styled.input`
   width: 100%;
   padding: 14px 18px;
   padding-right: 45px;
-  border: 2px solid #e2e8f0;
+  border: 2px solid ${props => props.theme.colors.inputBorder};
   border-radius: 10px;
   font-size: 14px;
-  color: #1e293b;
-  background: white;
+  color: ${props => props.theme.colors.textPrimary};
+  background: ${props => props.theme.colors.input};
   transition: all 0.2s ease;
 
   &:focus {
@@ -194,6 +195,7 @@ const PasswordVerificationModal = ({
 }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const { theme } = useTheme();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -218,28 +220,30 @@ const PasswordVerificationModal = ({
           onClick={handleClose}
         >
           <ModalContent
+            theme={theme}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <CloseButton onClick={handleClose}>
+            <CloseButton theme={theme} onClick={handleClose}>
               <X size={20} />
             </CloseButton>
 
-            <ModalHeader>
+            <ModalHeader theme={theme}>
               <ModalIcon>
                 <Lock size={20} />
               </ModalIcon>
               <div>
-                <ModalTitle>{title}</ModalTitle>
-                <ModalDescription>{description}</ModalDescription>
+                <ModalTitle theme={theme}>{title}</ModalTitle>
+                <ModalDescription theme={theme}>{description}</ModalDescription>
               </div>
             </ModalHeader>
 
             <form onSubmit={handleSubmit}>
               <PasswordInput>
                 <Input
+                  theme={theme}
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
