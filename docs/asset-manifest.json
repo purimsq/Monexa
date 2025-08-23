@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/Monexa/static/css/main.93934622.css",
+    "main.js": "/Monexa/static/js/main.477235d6.js",
+    "index.html": "/Monexa/index.html",
+    "main.93934622.css.map": "/Monexa/static/css/main.93934622.css.map",
+    "main.477235d6.js.map": "/Monexa/static/js/main.477235d6.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.93934622.css",
+    "static/js/main.477235d6.js"
+  ]
+}
