@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Modern pension scheme management application",
   "main": "public/electron.js",
-  "homepage": "./",
+  "homepage": "https://purimsq.github.io/Monexa",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.4",
