@@ -382,6 +382,7 @@ const Documents = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [beatToDelete, setBeatToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
 
 
   useEffect(() => {
@@ -408,54 +409,108 @@ const Documents = () => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
-    const file = files[0];
-
-    // Validate file type (audio and video files)
+    // Convert FileList to Array for easier handling
+    const fileArray = Array.from(files);
+    
+    // Validate all files first
     const allowedTypes = [
       // Audio formats
       'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp3', 'audio/flac', 'audio/aac', 'audio/x-wav', 'audio/x-mpeg',
       // Video formats
       'video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm'
     ];
-    
-    if (!allowedTypes.includes(file.type)) {
-      toast.error(`File type "${file.type}" not supported. Please upload audio files (MP3, WAV, OGG, FLAC, AAC) or video files (MP4, MOV, AVI, WebM)`);
-      return;
+
+    const validFiles = [];
+    const invalidFiles = [];
+
+    fileArray.forEach(file => {
+      if (!allowedTypes.includes(file.type)) {
+        invalidFiles.push(file.name);
+      } else {
+        // Validate file size (max 200MB for video, 50MB for audio)
+        const maxSize = file.type.startsWith('video/') ? 200 * 1024 * 1024 : 50 * 1024 * 1024;
+        if (file.size > maxSize) {
+          const maxSizeMB = file.type.startsWith('video/') ? '200MB' : '50MB';
+          invalidFiles.push(`${file.name} (too large - max ${maxSizeMB})`);
+        } else {
+          validFiles.push(file);
+        }
+      }
+    });
+
+    // Show error for invalid files
+    if (invalidFiles.length > 0) {
+      toast.error(`Invalid files: ${invalidFiles.join(', ')}`);
+      if (validFiles.length === 0) {
+        event.target.value = ''; // Reset file input
+        return;
+      }
     }
 
-    // Validate file size (max 200MB for video, 50MB for audio)
-    const maxSize = file.type.startsWith('video/') ? 200 * 1024 * 1024 : 50 * 1024 * 1024;
-    if (file.size > maxSize) {
-      const maxSizeMB = file.type.startsWith('video/') ? '200MB' : '50MB';
-      toast.error(`File size too large. Maximum size is ${maxSizeMB}.`);
+    if (validFiles.length === 0) {
+      event.target.value = ''; // Reset file input
       return;
     }
 
     try {
       setUploading(true);
-
-      const formData = new FormData();
-      formData.append('document', file);
-      formData.append('title', file.name.replace(/\.[^/.]+$/, '')); // Remove extension
       
-      // Determine category based on file type
-      const category = file.type.startsWith('video/') ? 'video' : 'beat';
-      formData.append('category', category);
-
-      const response = await apiService.uploadDocument(formData);
-
-      if (response && response.success) {
-        toast.success('Beat uploaded successfully!');
-        loadDocuments(); // Reload documents list
-      } else {
-        const errorMessage = response?.error || response?.message || 'Unknown error';
-        toast.error('Upload failed: ' + errorMessage);
+      // Show upload progress
+      if (validFiles.length > 1) {
+        toast.info(`Uploading ${validFiles.length} files...`, { autoClose: 2000 });
       }
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      // Upload files sequentially to avoid overwhelming the server
+      for (let i = 0; i < validFiles.length; i++) {
+        const file = validFiles[i];
+        setUploadProgress({ current: i + 1, total: validFiles.length });
+        
+        try {
+          const formData = new FormData();
+          formData.append('document', file);
+          formData.append('title', file.name.replace(/\.[^/.]+$/, '')); // Remove extension
+          
+          // Determine category based on file type
+          const category = file.type.startsWith('video/') ? 'video' : 'beat';
+          formData.append('category', category);
+
+          const response = await apiService.uploadDocument(formData);
+
+          if (response && response.success) {
+            successCount++;
+          } else {
+            errorCount++;
+            console.error(`Failed to upload ${file.name}:`, response?.error || 'Unknown error');
+          }
+        } catch (error) {
+          errorCount++;
+          console.error(`Error uploading ${file.name}:`, error);
+        }
+      }
+
+      // Show results
+      if (successCount > 0) {
+        if (validFiles.length === 1) {
+          toast.success('File uploaded successfully!');
+        } else {
+          toast.success(`${successCount} files uploaded successfully!`);
+        }
+        loadDocuments(); // Reload documents list
+      }
+
+      if (errorCount > 0) {
+        toast.error(`${errorCount} files failed to upload`);
+      }
+
     } catch (error) {
-      console.error('Upload error:', error);
-      toast.error('Failed to upload beat: ' + error.message);
+      console.error('Bulk upload error:', error);
+      toast.error('Failed to upload files: ' + error.message);
     } finally {
       setUploading(false);
+      setUploadProgress({ current: 0, total: 0 });
       event.target.value = ''; // Reset file input
     }
   };
@@ -592,7 +647,7 @@ const Documents = () => {
             <Music size={32} />
             Beat Library
           </Title>
-          <Subtitle>Manage your music collection with precision and style</Subtitle>
+          <Subtitle>Manage your music collection with precision and style. Upload multiple files at once.</Subtitle>
           
           <Controls>
             <SearchInput 
@@ -606,16 +661,22 @@ const Documents = () => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <Upload size={20} />
-              {uploading ? 'Uploading...' : 'Upload Beat'}
+                           <Upload size={20} />
+             {uploading 
+               ? uploadProgress.total > 1 
+                 ? `Uploading ${uploadProgress.current}/${uploadProgress.total}...` 
+                 : 'Uploading...'
+               : 'Upload Files'
+             }
             </UploadButton>
-            <input
-              id="file-upload"
-              type="file"
-              style={{ display: 'none' }}
-              onChange={handleFileUpload}
-              accept="audio/*,video/*,.mp3,.wav,.ogg,.flac,.aac,.m4a,.mp4,.mov,.avi,.webm"
-            />
+                       <input
+             id="file-upload"
+             type="file"
+             multiple
+             style={{ display: 'none' }}
+             onChange={handleFileUpload}
+             accept="audio/*,video/*,.mp3,.wav,.ogg,.flac,.aac,.m4a,.mp4,.mov,.avi,.webm"
+           />
           </Controls>
 
           {/* Category Filter */}
