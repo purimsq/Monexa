@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import apiService from '../services/api';
 import MediaPlayer from '../components/MediaPlayer';
+import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 
 // Clean white and black theme
 const Container = styled.div`
@@ -377,8 +378,10 @@ const Documents = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentDocument, setCurrentDocument] = useState(null);
   const [isPlayerMinimized, setIsPlayerMinimized] = useState(false);
-
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [beatToDelete, setBeatToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
 
   useEffect(() => {
@@ -388,22 +391,14 @@ const Documents = () => {
   const loadDocuments = async () => {
     try {
       setLoading(true);
-      console.log('Loading documents...');
       const response = await apiService.getDocuments();
-      console.log('Documents API response:', response);
       if (response && response.success) {
-        console.log('Documents found:', response.documents?.length || 0, 'documents');
         setDocuments(response.documents || []);
-        if (response.documents && response.documents.length > 0) {
-          toast.success(`Loaded ${response.documents.length} beats!`);
-        }
       } else {
-        console.log('API call failed or no documents:', response);
-        toast.error('Failed to load beats: ' + (response?.error || 'Unknown error'));
+        console.error('Failed to load beats:', response?.error || 'Unknown error');
       }
     } catch (error) {
       console.error('Failed to load documents:', error);
-      toast.error('Failed to load documents: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -416,7 +411,6 @@ const Documents = () => {
     const file = files[0];
 
     // Validate file type (audio and video files)
-    console.log('Selected file:', file.name, 'Type:', file.type, 'Size:', file.size);
     const allowedTypes = [
       // Audio formats
       'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp3', 'audio/flac', 'audio/aac', 'audio/x-wav', 'audio/x-mpeg',
@@ -425,7 +419,6 @@ const Documents = () => {
     ];
     
     if (!allowedTypes.includes(file.type)) {
-      console.error('File type not allowed:', file.type, 'Allowed types:', allowedTypes);
       toast.error(`File type "${file.type}" not supported. Please upload audio files (MP3, WAV, OGG, FLAC, AAC) or video files (MP4, MOV, AVI, WebM)`);
       return;
     }
@@ -440,7 +433,6 @@ const Documents = () => {
 
     try {
       setUploading(true);
-      console.log('Starting upload process...');
 
       const formData = new FormData();
       formData.append('document', file);
@@ -449,23 +441,13 @@ const Documents = () => {
       // Determine category based on file type
       const category = file.type.startsWith('video/') ? 'video' : 'beat';
       formData.append('category', category);
-      
-      console.log('FormData created with:');
-      console.log('- File:', file.name, file.type, file.size);
-      console.log('- Title:', file.name.replace(/\.[^/.]+$/, ''));
-      console.log('- Category:', category);
-
-      const mediaType = file.type.startsWith('video/') ? 'video' : 'beat';
-      toast.info(`Uploading ${mediaType}...`, { autoClose: 1000 });
 
       const response = await apiService.uploadDocument(formData);
-      console.log('Upload response:', response);
 
       if (response && response.success) {
-        toast.success(`${mediaType.charAt(0).toUpperCase() + mediaType.slice(1)} uploaded successfully!`);
+        toast.success('Beat uploaded successfully!');
         loadDocuments(); // Reload documents list
       } else {
-        console.log('Upload failed:', response);
         const errorMessage = response?.error || response?.message || 'Unknown error';
         toast.error('Upload failed: ' + errorMessage);
       }
@@ -483,7 +465,6 @@ const Documents = () => {
   };
 
   const handlePlay = (document) => {
-    console.log('Opening media player for document:', document.id);
     setCurrentDocument(document);
     setIsPlayerMinimized(false);
   };
@@ -511,25 +492,42 @@ const Documents = () => {
       link.click();
       window.document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
-      toast.success('Download started!');
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download file');
     }
   };
 
-  const handleDelete = async (document) => {
-    if (window.confirm('Are you sure you want to delete this beat?')) {
-      try {
-        // Would call API to delete, but we'll just show toast for now
+  const handleDelete = (document) => {
+    setBeatToDelete(document);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async (beat) => {
+    try {
+      setIsDeleting(true);
+      // Call API to delete the beat
+      const response = await apiService.deleteDocument(beat.id);
+      
+      if (response && response.success) {
         toast.success('Beat deleted successfully!');
-        loadDocuments();
-      } catch (error) {
-        console.error('Delete error:', error);
+        setDocuments(prev => prev.filter(doc => doc.id !== beat.id));
+        setShowDeleteModal(false);
+        setBeatToDelete(null);
+      } else {
         toast.error('Failed to delete beat');
       }
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error('Failed to delete beat');
+    } finally {
+      setIsDeleting(false);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false);
+    setBeatToDelete(null);
   };
 
   const handleClosePlayer = () => {
@@ -541,7 +539,8 @@ const Documents = () => {
   };
 
   const handleDeleteFromPlayer = async (document) => {
-    await handleDelete(document);
+    setBeatToDelete(document);
+    setShowDeleteModal(true);
     setCurrentDocument(null);
   };
 
@@ -741,6 +740,15 @@ const Documents = () => {
             />
           )}
         </AnimatePresence>
+
+        {/* Delete Confirmation Modal */}
+        <DeleteConfirmationModal
+          isOpen={showDeleteModal}
+          onClose={handleDeleteCancel}
+          onConfirm={handleDeleteConfirm}
+          beat={beatToDelete}
+          isDeleting={isDeleting}
+        />
       </Content>
     </Container>
   );
