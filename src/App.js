@@ -24,6 +24,7 @@ import Notifications from './pages/Notifications';
 import Settings from './pages/Settings';
 import Beneficiaries from './pages/Beneficiaries';
 import Documents from './pages/Documents';
+import Mail from './pages/Mail';
 import Applications from './pages/Applications';
 
 // Global Styles
@@ -93,6 +94,7 @@ function AppContent() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/beneficiaries" element={<Beneficiaries />} />
           <Route path="/documents" element={<Documents />} />
+          <Route path="/mail" element={<Mail />} />
           <Route path="/applications" element={<Applications />} />
         </Routes>
       </MainColumn>

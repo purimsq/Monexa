@@ -214,6 +214,7 @@ const Profile = () => {
   // Initialize form data with user information
   useEffect(() => {
     if (user) {
+      console.log('User data updated in Profile component:', user);
       setFormData({
         name: user.name || '',
         email: user.email || '',
@@ -240,17 +241,44 @@ const Profile = () => {
     setModalError(null);
 
     try {
+      console.log('Form data before update:', formData);
+      
       const profileData = {
-        ...formData,
+        name: formData.name,
+        email: formData.email, // Add email field
+        phone: formData.phone,
+        location: formData.location,
+        experience: formData.experience,
+        bio: formData.bio,
+        role: formData.specialty, // Map specialty to role
         currentPassword: password
       };
       
+      console.log('Profile data being sent:', profileData);
+      
       const result = await updateProfile(profileData);
+      
+      console.log('Profile update result:', result);
       
       if (result.success) {
         setShowPasswordModal(false);
         setModalLoading(false);
         setIsEditing(false);
+        
+        // Update the form data with the new values to reflect changes immediately
+        setFormData({
+          name: profileData.name,
+          email: profileData.email,
+          phone: profileData.phone,
+          location: profileData.location,
+          specialty: profileData.role,
+          experience: profileData.experience,
+          bio: profileData.bio
+        });
+        
+        // Force a re-render by updating the user context
+        // This ensures the UI reflects the changes immediately
+        console.log('Profile updated successfully, forcing re-render');
         
         toast.success('Profile updated successfully!', {
           position: "bottom-right",
@@ -357,76 +385,83 @@ const Profile = () => {
         </ProfileHeader>
 
         <FormGrid>
-          <FormGroup>
-            <Label>Full Name</Label>
-            <Input
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-            />
-          </FormGroup>
+                     <FormGroup>
+             <Label>Full Name</Label>
+             <Input
+               key={`name-${formData.name}`}
+               name="name"
+               value={formData.name}
+               onChange={handleInputChange}
+               disabled={!isEditing}
+             />
+           </FormGroup>
 
-          <FormGroup>
-            <Label>Email</Label>
-            <Input
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-            />
-          </FormGroup>
+           <FormGroup>
+             <Label>Email</Label>
+             <Input
+               key={`email-${formData.email}`}
+               name="email"
+               value={formData.email}
+               onChange={handleInputChange}
+               disabled={!isEditing}
+             />
+           </FormGroup>
 
-          <FormGroup>
-            <Label>Phone</Label>
-            <Input
-              name="phone"
-              value={formData.phone}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-            />
-          </FormGroup>
+                     <FormGroup>
+             <Label>Phone</Label>
+             <Input
+               key={`phone-${formData.phone}`}
+               name="phone"
+               value={formData.phone}
+               onChange={handleInputChange}
+               disabled={!isEditing}
+             />
+           </FormGroup>
 
-          <FormGroup>
-            <Label>Location</Label>
-            <Input
-              name="location"
-              value={formData.location}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-            />
-          </FormGroup>
+           <FormGroup>
+             <Label>Location</Label>
+             <Input
+               key={`location-${formData.location}`}
+               name="location"
+               value={formData.location}
+               onChange={handleInputChange}
+               disabled={!isEditing}
+             />
+           </FormGroup>
 
-          <FormGroup>
-            <Label>Specialty</Label>
-            <Input
-              name="specialty"
-              value={formData.specialty}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-            />
-          </FormGroup>
+           <FormGroup>
+             <Label>Specialty</Label>
+             <Input
+               key={`specialty-${formData.specialty}`}
+               name="specialty"
+               value={formData.specialty}
+               onChange={handleInputChange}
+               disabled={!isEditing}
+             />
+           </FormGroup>
 
-          <FormGroup>
-            <Label>Experience</Label>
-            <Input
-              name="experience"
-              value={formData.experience}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-            />
-          </FormGroup>
+           <FormGroup>
+             <Label>Experience</Label>
+             <Input
+               key={`experience-${formData.experience}`}
+               name="experience"
+               value={formData.experience}
+               onChange={handleInputChange}
+               disabled={!isEditing}
+             />
+           </FormGroup>
         </FormGrid>
 
-        <FormGroup>
-          <Label>Bio</Label>
-          <TextArea
-            name="bio"
-            value={formData.bio}
-            onChange={handleInputChange}
-            disabled={!isEditing}
-          />
-        </FormGroup>
+                 <FormGroup>
+           <Label>Bio</Label>
+           <TextArea
+             key={`bio-${formData.bio}`}
+             name="bio"
+             value={formData.bio}
+             onChange={handleInputChange}
+             disabled={!isEditing}
+           />
+         </FormGroup>
 
         {isEditing && (
           <ButtonGroup>

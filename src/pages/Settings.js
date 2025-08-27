@@ -827,6 +827,7 @@ const Settings = () => {
         email: settings.email,
         phone: settings.phone,
         bio: settings.bio,
+        role: user?.role || 'Music Producer', // Add role field
         currentPassword: password
       };
       

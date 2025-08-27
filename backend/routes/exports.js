@@ -233,13 +233,29 @@ const processExportRequest = async (exportId, user) => {
 
         // Send email notification
         const userEmail = await emailService.getUserEmail(user.id);
-        const emailSent = userEmail ? await sendExportEmail(userEmail, user.name, type, filePath) : false;
+        console.log(`Attempting to send export email to: ${userEmail} for user: ${user.name}`);
+        
+        let emailSent = false;
+        if (userEmail) {
+            try {
+                emailSent = await sendExportEmail(userEmail, user.name, type, filePath);
+                console.log(`Export email sent successfully: ${emailSent}`);
+            } catch (emailError) {
+                console.error('Export email error:', emailError);
+                emailSent = false;
+            }
+        } else {
+            console.log('No user email found, skipping email notification');
+        }
         
         if (emailSent) {
             await database.run(
                 'UPDATE export_requests SET email_sent = 1 WHERE id = ?',
                 [exportId]
             );
+            console.log(`Updated export request ${exportId} with email_sent = 1`);
+        } else {
+            console.log(`Export email failed for request ${exportId}`);
         }
 
         console.log(`Export completed successfully for user ${user.id}, type: ${type}`);

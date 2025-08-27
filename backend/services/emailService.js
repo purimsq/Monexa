@@ -48,6 +48,9 @@ class EmailService {
      * Send export completion email
      */
     async sendExportEmail(userEmail, userName, exportType, filePath = null) {
+        console.log(`EmailService: Sending export email to ${userEmail} for ${userName}, type: ${exportType}`);
+        console.log(`EmailService: File path: ${filePath}`);
+        
         const args = {
             to: userEmail,
             name: userName,
@@ -58,7 +61,9 @@ class EmailService {
             args.filePath = filePath;
         }
 
-        return this._callPythonService('export', args);
+        const result = await this._callPythonService('export', args);
+        console.log(`EmailService: Export email result: ${result}`);
+        return result;
     }
 
     /**
@@ -164,6 +169,10 @@ The Monexa Team`;
             });
 
             pythonProcess.on('close', (code) => {
+                console.log(`Python process exited with code: ${code}`);
+                console.log(`Python stdout: ${output.trim()}`);
+                console.log(`Python stderr: ${errorOutput.trim()}`);
+                
                 if (code === 0) {
                     console.log(`Email sent successfully (${type}):`, output.trim());
                     resolve(true);

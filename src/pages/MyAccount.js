@@ -7,15 +7,21 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import apiService from '../services/api';
 import GoalsModal from '../components/GoalsModal';
+import PayPalLoginModal from '../components/PayPalLoginModal';
+import PayPalTransferModal from '../components/PayPalTransferModal';
 import { 
-  CreditCard, 
   DollarSign, 
   TrendingUp, 
   Plus, 
   Minus, 
   Lock, 
-  Wallet,
   Calendar,
+  Eye,
+  EyeOff,
+  Send,
+  Download,
+  Upload,
+  CreditCard,
   Shield,
   CheckCircle,
   Zap,
@@ -24,13 +30,22 @@ import {
   Bell,
   HelpCircle,
   ChevronRight,
-  Download
+  Download as DownloadIcon,
+  User,
+  Mail,
+  AlertCircle,
+  RefreshCw,
+  LogOut,
+  LogIn
 } from 'lucide-react';
 
 const Container = styled.div`
   max-width: 1400px;
   margin: 0 auto;
   padding: 24px;
+  background-color: ${props => props.theme?.colors?.primary || '#ffffff'};
+  color: ${props => props.theme?.colors?.textPrimary || '#1f2937'};
+  min-height: 100vh;
 `;
 
 const Header = styled.div`
@@ -40,7 +55,7 @@ const Header = styled.div`
 const Title = styled.h1`
   font-size: 28px;
   font-weight: 700;
-  color: #1e293b;
+  color: ${props => props.theme?.colors?.textPrimary || '#1f2937'};
   margin-bottom: 8px;
   display: flex;
   align-items: center;
@@ -48,331 +63,191 @@ const Title = styled.h1`
 `;
 
 const Subtitle = styled.p`
-  color: #64748b;
+  color: ${props => props.theme?.colors?.textSecondary || '#6b7280'};
   font-size: 16px;
 `;
 
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: 1.5fr 1fr;
-  gap: 24px;
-  margin-bottom: 24px;
-`;
-
-const ThreeColumnGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 24px;
-`;
-
-const TwoColumnGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 24px;
-`;
-
-const Card = styled(motion.div)`
-  background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.25)' : 'white'};
-  backdrop-filter: ${props => props.theme?.name === 'glassmorphism' ? 'blur(20px) saturate(180%)' : 'none'};
-  border: ${props => props.theme?.name === 'glassmorphism' ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid #e2e8f0'};
-  border-radius: 20px;
-  padding: 28px;
-  box-shadow: ${props => props.theme?.name === 'glassmorphism' ? '0 8px 32px rgba(31, 38, 135, 0.37)' : '0 6px 24px rgba(0, 0, 0, 0.08)'};
-  min-height: 280px;
-  display: flex;
-  flex-direction: column;
-
-  &:hover {
-    box-shadow: ${props => props.theme?.name === 'glassmorphism' ? '0 12px 40px rgba(31, 38, 135, 0.45)' : '0 8px 32px rgba(0, 0, 0, 0.12)'};
-    transform: translateY(-2px);
-    background: ${props => props.theme?.name === 'glassmorphism' ? 'rgba(255, 255, 255, 0.35)' : 'white'};
-  }
-`;
-
-const CardTitle = styled.h3`
-  font-size: 18px;
-  font-weight: 600;
-  color: ${props => props.theme?.name === 'glassmorphism' ? '#1a237e' : '#1e293b'};
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const WalletCard = styled(motion.div)`
-  background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
+const PayPalContainer = styled.div`
+  background: ${props => props.theme?.colors?.card || '#ffffff'};
   border-radius: 24px;
-  padding: 40px;
-  color: white;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
-  min-height: 280px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-`;
-
-const WalletHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-`;
-
-const WalletTitle = styled.h3`
-  font-size: 18px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const WalletBalance = styled.div`
-  font-size: 42px;
-  font-weight: 700;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
-
-const WalletSubtitle = styled.div`
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 24px;
-`;
-
-const WalletActions = styled.div`
-  display: flex;
-  gap: 12px;
-`;
-
-const WalletButton = styled(motion.button)`
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 10px 16px;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  backdrop-filter: blur(10px);
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.25);
-    transform: translateY(-1px);
-  }
-
-  &.primary {
-    background: linear-gradient(135deg, #10b981, #059669);
-    border: none;
-
-    &:hover {
-      background: linear-gradient(135deg, #059669, #047857);
-    }
-  }
-`;
-
-const CardManagement = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  flex: 1;
-`;
-
-const CardItem = styled(motion.div)`
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 2px solid #e2e8f0;
-  border-radius: 20px;
   padding: 32px;
-  position: relative;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-height: 200px;
-  min-width: 320px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-
-  &:hover {
-    border-color: #1a1a1a;
-    transform: translateY(-3px);
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
-  }
-
-  &.active {
-    border-color: #1a1a1a;
-    background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
-    color: white;
-  }
-
-  &.visa {
-    background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
-    color: white;
-    border-color: #1a1a1a;
-  }
-
-  &.mastercard {
-    background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
-    color: white;
-    border-color: #ff6b35;
-  }
+  box-shadow: ${props => props.theme?.shadows?.medium || '0 4px 6px rgba(0, 0, 0, 0.1)'};
+  border: 1px solid ${props => props.theme?.colors?.borderSecondary || '#e5e7eb'};
+  margin-bottom: 24px;
+  ${props => props.theme?.name === 'glassmorphism' && `
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  `}
 `;
 
-const CardHeader = styled.div`
+const PayPalHeader = styled.div`
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid ${props => props.theme?.colors?.borderSecondary || '#e5e7eb'};
 `;
 
-const CardType = styled.div`
+const PayPalLogo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 24px;
   font-weight: 700;
-  font-size: 18px;
+  color: #0070ba;
+`;
+
+const PayPalStatus = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-`;
-
-const CardNumber = styled.div`
-  font-family: 'Courier New', monospace;
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: 3px;
-  margin-bottom: 16px;
-  text-align: center;
-`;
-
-const CardDetails = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding: 8px 16px;
+  border-radius: 20px;
   font-size: 14px;
-  opacity: 0.9;
-  margin-top: auto;
+  font-weight: 600;
+  background: ${props => props.connected ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #f59e0b, #d97706)'};
+  color: white;
 `;
 
-const AuthenticationModal = styled(motion.div)`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+const BalanceSection = styled.div`
+  text-align: center;
+  margin-bottom: 32px;
+`;
+
+const BalanceLabel = styled.div`
+  font-size: 16px;
+  color: ${props => props.theme?.colors?.textSecondary || '#6b7280'};
+  margin-bottom: 8px;
+`;
+
+const BalanceAmount = styled.div`
+  font-size: ${props => props.blurred ? '32px' : '48px'};
+  font-weight: 700;
+  color: ${props => props.theme?.colors?.textPrimary || '#1f2937'};
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(8px);
+  gap: 12px;
+  filter: ${props => props.blurred ? 'blur(4px)' : 'none'};
+  transition: all 0.3s ease;
+  cursor: ${props => props.blurred ? 'pointer' : 'default'};
+  
+  &:hover {
+    filter: ${props => props.blurred ? 'blur(2px)' : 'none'};
+  }
 `;
 
-const ModalContent = styled(motion.div)`
-  background: white;
-  border-radius: 20px;
-  padding: 32px;
-  width: 90%;
-  max-width: 400px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+const BalanceToggle = styled.button`
+  background: none;
+  border: none;
+  color: ${props => props.theme?.colors?.textSecondary || '#6b7280'};
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${props => props.theme?.colors?.tertiary || '#f3f4f6'};
+    color: ${props => props.theme?.colors?.textPrimary || '#1f2937'};
+  }
 `;
 
-const ModalTitle = styled.h3`
-  font-size: 20px;
+const ActionButtons = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 32px;
+`;
+
+const ActionButton = styled(motion.button)`
+  background: ${props => props.primary ? 'linear-gradient(135deg, #0070ba, #005ea6)' : (props.theme?.colors?.tertiary || '#f3f4f6')};
+  color: ${props => props.primary ? 'white' : (props.theme?.colors?.textPrimary || '#1f2937')};
+  border: none;
+  padding: 16px 24px;
+  border-radius: 16px;
   font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 16px;
+  font-size: 16px;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 16px;
-  margin-bottom: 16px;
-  transition: all 0.2s ease;
-
-  &:focus {
-    outline: none;
-    border-color: #1a1a1a;
-    box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.1);
-  }
-`;
-
-const ModalButtons = styled.div`
-  display: flex;
+  justify-content: center;
   gap: 12px;
-`;
-
-const Button = styled(motion.button)`
-  flex: 1;
-  padding: 12px 20px;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
   transition: all 0.2s ease;
+  box-shadow: ${props => props.primary ? '0 4px 12px rgba(0, 112, 186, 0.3)' : 'none'};
 
-  &.primary {
-    background: linear-gradient(135deg, #1a1a1a, #333333);
-    color: white;
-
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-    }
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: ${props => props.primary ? '0 6px 20px rgba(0, 112, 186, 0.4)' : '0 4px 12px rgba(0, 0, 0, 0.1)'};
   }
 
-  &.secondary {
-    background: #f1f5f9;
-    color: #64748b;
-    border: 2px solid #e2e8f0;
-
-    &:hover {
-      background: #e2e8f0;
-      color: #1e293b;
-    }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
   }
 `;
 
-const TransactionSection = styled.div`
-  margin-top: 24px;
+const LoginSection = styled.div`
+  text-align: center;
+  padding: 40px 20px;
+  color: ${props => props.theme?.colors?.textSecondary || '#6b7280'};
+`;
+
+const LoginButton = styled(motion.button)`
+  background: linear-gradient(135deg, #0070ba, #005ea6);
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 0 auto;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 112, 186, 0.3);
+
+    &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 112, 186, 0.4);
+  }
+`;
+
+const TransactionsSection = styled.div`
+  background: ${props => props.theme?.colors?.card || '#ffffff'};
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: ${props => props.theme?.shadows?.medium || '0 4px 6px rgba(0, 0, 0, 0.1)'};
+  border: 1px solid ${props => props.theme?.colors?.borderSecondary || '#e5e7eb'};
+  ${props => props.theme?.name === 'glassmorphism' && `
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  `}
 `;
 
 const SectionHeader = styled.div`
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  justify-content: space-between;
+  margin-bottom: 24px;
 `;
 
-const ViewAllButton = styled(motion.button)`
-  background: none;
-  border: none;
-  color: #1a1a1a;
+const SectionTitle = styled.h3`
+  font-size: 20px;
   font-weight: 600;
-  cursor: pointer;
+  color: ${props => props.theme?.colors?.textPrimary || '#1f2937'};
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: #f1f5f9;
-  }
+  gap: 8px;
 `;
 
 const TransactionList = styled.div`
@@ -384,35 +259,29 @@ const TransactionList = styled.div`
 const TransactionItem = styled(motion.div)`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   padding: 16px;
   border-radius: 12px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: ${props => props.theme?.colors?.tertiary || '#f9fafb'};
+  border: 1px solid ${props => props.theme?.colors?.borderSecondary || '#e5e7eb'};
   transition: all 0.2s ease;
-  cursor: pointer;
 
   &:hover {
-    background: #f1f5f9;
     transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 `;
 
 const TransactionIcon = styled.div`
   width: 40px;
   height: 40px;
-  border-radius: 12px;
-  background: ${props => {
-    if (props.type === 'deposit') return 'linear-gradient(135deg, #10b981, #059669)';
-    if (props.type === 'withdrawal') return 'linear-gradient(135deg, #ef4444, #dc2626)';
-    if (props.type === 'payment') return 'linear-gradient(135deg, #3b82f6, #1d4ed8)';
-    return 'linear-gradient(135deg, #1a1a1a, #333333)';
-  }};
+  border-radius: 50%;
+  background: ${props => props.type === 'send' ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'linear-gradient(135deg, #10b981, #059669)'};
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-weight: 600;
+  font-size: 16px;
 `;
 
 const TransactionInfo = styled.div`
@@ -421,14 +290,13 @@ const TransactionInfo = styled.div`
 
 const TransactionTitle = styled.div`
   font-weight: 600;
-  color: #1e293b;
-  font-size: 14px;
+  color: ${props => props.theme?.colors?.textPrimary || '#1f2937'};
   margin-bottom: 4px;
 `;
 
 const TransactionDate = styled.div`
-  font-size: 12px;
-  color: #64748b;
+  font-size: 14px;
+  color: ${props => props.theme?.colors?.textSecondary || '#6b7280'};
   display: flex;
   align-items: center;
   gap: 4px;
@@ -436,69 +304,55 @@ const TransactionDate = styled.div`
 
 const TransactionAmount = styled.div`
   font-weight: 700;
-  color: ${props => {
-    if (props.type === 'deposit') return '#10b981';
-    if (props.type === 'withdrawal') return '#ef4444';
-    if (props.type === 'payment') return '#3b82f6';
-    return '#1e293b';
-  }};
   font-size: 16px;
+  color: ${props => props.type === 'send' ? '#ef4444' : '#10b981'};
 `;
 
 const StatusBadge = styled.div`
   padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 10px;
+  border-radius: 8px;
+  font-size: 12px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  background: ${props => {
-    if (props.status === 'completed') return '#dcfce7';
-    if (props.status === 'pending') return '#fef3c7';
-    if (props.status === 'failed') return '#fee2e2';
-    return '#f1f5f9';
-  }};
-  color: ${props => {
-    if (props.status === 'completed') return '#166534';
-    if (props.status === 'pending') return '#92400e';
-    if (props.status === 'failed') return '#991b1b';
-    return '#64748b';
-  }};
+  background: ${props => props.status === 'completed' ? '#10b981' : props.status === 'pending' ? '#f59e0b' : '#ef4444'};
+  color: white;
 `;
 
 const QuickActionsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 `;
 
 const QuickActionButton = styled(motion.button)`
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 2px solid #e2e8f0;
-  border-radius: 18px;
-  padding: 24px 16px;
+  background: ${props => props.theme?.colors?.card || '#ffffff'};
+  border: 1px solid ${props => props.theme?.colors?.borderSecondary || '#e5e7eb'};
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  cursor: pointer;
+  gap: 12px;
   transition: all 0.2s ease;
-  font-weight: 600;
-  color: #1e293b;
-  font-size: 14px;
+  color: ${props => props.theme?.colors?.textPrimary || '#1f2937'};
+  ${props => props.theme?.name === 'glassmorphism' && `
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  `}
 
   &:hover {
-    border-color: #1a1a1a;
-    transform: translateY(-3px);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+    transform: translateY(-4px);
+    box-shadow: ${props => props.theme?.shadows?.large || '0 10px 25px rgba(0, 0, 0, 0.1)'};
   }
 
   .icon {
     width: 40px;
     height: 40px;
-    border-radius: 14px;
-    background: linear-gradient(135deg, #1a1a1a, #333333);
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0070ba, #005ea6);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -506,243 +360,184 @@ const QuickActionButton = styled(motion.button)`
   }
 `;
 
-// Dummy data
-const walletData = {
-  balance: 25450.75,
+// Mock PayPal data
+const mockPayPalData = {
+  connected: false,
+  balance: 2547.89,
   currency: 'USD',
-  lastUpdated: '2024-12-15'
-};
-
-const getMockCards = (userName) => [
+  email: 'user@example.com',
+  transactions: [
   {
     id: 1,
-    type: 'Visa',
-    number: '4532 **** **** 1234',
-    holder: userName || 'User',
-    expiry: '12/26',
-    cvv: '***',
-    isDefault: true
-  },
-  {
-    id: 2,
-    type: 'Mastercard',
-    number: '5425 **** **** 5678',
-    holder: userName || 'User',
-    expiry: '08/25',
-    cvv: '***',
-    isDefault: false
-  },
-  {
-    id: 3,
-    type: 'Visa',
-    number: '4111 **** **** 9999',
-    holder: userName || 'User',
-    expiry: '03/27',
-    cvv: '***',
-    isDefault: false
-  },
-  {
-    id: 4,
-    type: 'Mastercard',
-    number: '5555 **** **** 4444',
-    holder: userName || 'User',
-    expiry: '11/26',
-    cvv: '***',
-    isDefault: false
-  }
-];
-
-const transactions = [
-  { 
-    id: 1, 
-    title: 'Beat Sale - Midnight Vibes', 
+      type: 'receive',
+      title: 'Payment from John Producer',
     amount: '+$150.00', 
-    type: 'deposit', 
     date: 'Dec 15, 2024',
     time: '14:30',
     status: 'completed',
-    reference: 'TXN-001'
+      email: 'john@producer.com'
   },
   { 
     id: 2, 
-    title: 'Studio Equipment Purchase', 
+      type: 'send',
+      title: 'Payment to Studio Equipment',
     amount: '-$200.00', 
-    type: 'withdrawal', 
     date: 'Dec 12, 2024',
     time: '09:15',
     status: 'completed',
-    reference: 'TXN-002'
+      email: 'studio@equipment.com'
   },
   { 
     id: 3, 
-    title: 'Beat Sale - Summer Heat', 
-    amount: '+$200.00', 
-    type: 'deposit', 
+      type: 'receive',
+      title: 'Payment from Music Label',
+      amount: '+$500.00',
     date: 'Dec 10, 2024',
     time: '16:45',
     status: 'completed',
-    reference: 'TXN-003'
+      email: 'label@music.com'
   },
   { 
     id: 4, 
-    title: 'Software License Renewal', 
+      type: 'send',
+      title: 'Payment to Software License',
     amount: '-$80.00', 
-    type: 'payment', 
     date: 'Dec 08, 2024',
     time: '11:20',
     status: 'pending',
-    reference: 'TXN-004'
-  },
-  { 
-    id: 5, 
-    title: 'Beat Sale - Urban Flow', 
-    amount: '+$180.00', 
-    type: 'deposit', 
-    date: 'Dec 05, 2024',
-    time: '13:10',
-    status: 'completed',
-    reference: 'TXN-005'
-  },
-];
+      email: 'software@license.com'
+    }
+  ]
+};
 
 const MyAccount = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { theme } = useTheme();
-  const [cards, setCards] = useState([]);
-  const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authType, setAuthType] = useState('');
-  const [pin, setPin] = useState('');
-  const [showCardDetails, setShowCardDetails] = useState({});
+  const [paypalData, setPaypalData] = useState(mockPayPalData);
+  const [balanceBlurred, setBalanceBlurred] = useState(true);
   const [showGoalsModal, setShowGoalsModal] = useState(false);
-  const [selectedCard, setSelectedCard] = useState(null);
+  const [showPayPalLoginModal, setShowPayPalLoginModal] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferType, setTransferType] = useState('send');
+  const [loading, setLoading] = useState(false);
 
-  // Load data on component mount
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  // Load real PayPal data
+  const loadPayPalData = async () => {
     try {
-      setLoading(true);
-      const [cardsResponse, transactionsResponse] = await Promise.all([
-        apiService.getCards(),
-        apiService.getTransactions({ limit: 5 })
-      ]);
-
-      if (cardsResponse.success) {
-        setCards(cardsResponse.cards);
-      }
-
-      if (transactionsResponse.success) {
-        setTransactions(transactionsResponse.transactions);
+      // Check PayPal connection status
+      const statusResponse = await apiService.getPayPalStatus();
+      
+      if (statusResponse.success && statusResponse.connected) {
+        // Get real balance
+        const balanceResponse = await apiService.getPayPalBalance();
+        
+        // Get real transactions
+        const transactionsResponse = await apiService.getPayPalTransactions(10, 0);
+        
+        setPaypalData(prev => ({
+          ...prev,
+          connected: true,
+          balance: balanceResponse.success ? balanceResponse.balance : prev.balance,
+          transactions: transactionsResponse.success ? transactionsResponse.transactions : prev.transactions
+        }));
       }
     } catch (error) {
-      console.error('Failed to load data:', error);
-      toast.error('Failed to load account data');
-    } finally {
-      setLoading(false);
+      console.error('Error loading PayPal data:', error);
     }
   };
 
-  const handleCardClick = (card) => {
-    setSelectedCard(card);
-    setAuthType('view');
-    setShowAuthModal(true);
+  // Load PayPal data on component mount
+  useEffect(() => {
+    loadPayPalData();
+  }, []);
+
+  const handlePayPalLogin = () => {
+    setShowPayPalLoginModal(true);
   };
 
-  const handleDeposit = () => {
-    toast.info('Deposit functionality coming soon - will integrate with payment gateway!', {
+  const handlePayPalLoginSuccess = (data) => {
+    setPaypalData(prev => ({ 
+      ...prev, 
+      connected: true,
+      email: data.account?.email || 'Connected',
+      account: data.account
+    }));
+    loadPayPalData(); // Refresh data
+  };
+
+  const handlePayPalLogout = async () => {
+    try {
+      const response = await apiService.disconnectPayPal();
+      
+      if (response.success) {
+        setPaypalData(prev => ({ ...prev, connected: false }));
+        toast.success('PayPal account disconnected successfully', {
       position: "bottom-right",
       autoClose: 3000,
     });
-  };
-
-  const handleWithdraw = () => {
-    toast.info('Withdraw functionality coming soon - will integrate with bank APIs!', {
-      position: "bottom-right",
-      autoClose: 3000,
-    });
-  };
-
-  const handlePayment = () => {
-    navigate('/beneficiaries');
-    toast.success('Redirecting to beneficiaries for payments...', {
-      position: "bottom-right",
-      autoClose: 2000,
-    });
-  };
-
-  const handleAuthSubmit = () => {
-    if (pin === '1234') { // Dummy PIN
-      if (authType === 'view') {
-        setShowCardDetails(prev => ({ ...prev, [selectedCard.id]: true }));
-        toast.success('Card details revealed!', {
-          position: "bottom-right",
-          autoClose: 2000,
-        });
       } else {
-        toast.success(`${authType.charAt(0).toUpperCase() + authType.slice(1)} initiated successfully!`, {
-          position: "bottom-right",
-          autoClose: 3000,
-        });
+        toast.error(response.message || 'Failed to disconnect PayPal account', {
+      position: "bottom-right",
+      autoClose: 3000,
+    });
       }
-      setShowAuthModal(false);
-      setPin('');
-    } else {
-      toast.error('Incorrect PIN!', {
-        position: "bottom-right",
+    } catch (error) {
+      console.error('PayPal logout error:', error);
+      toast.error('Failed to disconnect PayPal account', {
+      position: "bottom-right",
         autoClose: 3000,
       });
     }
   };
 
-  const handleViewAllTransactions = () => {
-    toast.info('Redirecting to full transaction history...', {
-      position: "bottom-right",
-      autoClose: 2000,
-    });
-    navigate('/transaction-history');
+  const handleSendMoney = () => {
+    if (!paypalData.connected) {
+      toast.error('Please connect your PayPal account first', {
+          position: "bottom-right",
+          autoClose: 3000,
+        });
+      return;
+    }
+    setTransferType('send');
+    setShowTransferModal(true);
+  };
+
+  const handleRequestMoney = () => {
+    if (!paypalData.connected) {
+      toast.error('Please connect your PayPal account first', {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+    setTransferType('request');
+    setShowTransferModal(true);
+  };
+
+  const handleTransferSuccess = () => {
+    loadPayPalData(); // Refresh data after transfer
   };
 
   const handleQuickAction = (action) => {
     switch (action) {
-      case 'addCard':
-        navigate('/cards');
-        toast.success('Redirecting to card management...', {
-          position: "bottom-right",
-          autoClose: 2000,
-        });
-        break;
       case 'setGoal':
-        // Open financial goals modal
-        console.log('Opening Goals Modal...'); // Debug line
         setShowGoalsModal(true);
         break;
       case 'exportData':
-        toast.success('Financial data exported successfully!', {
+        toast.success('PayPal transaction data exported successfully!', {
           position: "bottom-right",
           autoClose: 3000,
         });
         break;
       case 'notifications':
         navigate('/notifications');
-        toast.success('Redirecting to notifications...', {
-          position: "bottom-right",
-          autoClose: 2000,
-        });
         break;
       case 'settings':
         navigate('/settings');
-        toast.success('Redirecting to settings...', {
-          position: "bottom-right",
-          autoClose: 2000,
-        });
         break;
       case 'help':
-        toast.info('Help and support coming soon!', {
+        toast.info('PayPal integration help coming soon!', {
           position: "bottom-right",
           autoClose: 3000,
         });
@@ -753,36 +548,133 @@ const MyAccount = () => {
   };
 
   const getTransactionIcon = (type) => {
-    switch (type) {
-      case 'deposit': return <Plus size={16} />;
-      case 'withdrawal': return <Minus size={16} />;
-      case 'payment': return <CreditCard size={16} />;
-      default: return <DollarSign size={16} />;
-    }
+    return type === 'send' ? <Send size={16} /> : <Download size={16} />;
   };
 
   return (
-    <Container>
+    <Container theme={theme}>
       <Header>
-        <Title>
-          <Wallet size={28} />
-          Finances
+        <Title theme={theme}>
+          <DollarSign size={28} />
+          PayPal Finance Hub
         </Title>
-        <Subtitle>Manage your wallet, cards, and financial transactions</Subtitle>
+        <Subtitle theme={theme}>
+          Manage your PayPal account, send and receive money securely
+        </Subtitle>
       </Header>
+
+      {/* PayPal Integration Section */}
+      <PayPalContainer theme={theme}>
+        <PayPalHeader theme={theme}>
+          <PayPalLogo>
+            <div style={{ color: '#0070ba', fontSize: '28px' }}>PayPal</div>
+            {paypalData.connected && <CheckCircle size={20} color="#10b981" />}
+          </PayPalLogo>
+          <PayPalStatus connected={paypalData.connected}>
+            {paypalData.connected ? (
+              <>
+                <CheckCircle size={16} />
+                Connected
+              </>
+            ) : (
+              <>
+                <AlertCircle size={16} />
+                Not Connected
+              </>
+            )}
+          </PayPalStatus>
+        </PayPalHeader>
+
+        {paypalData.connected ? (
+          <>
+            <BalanceSection>
+              <BalanceLabel theme={theme}>Available Balance</BalanceLabel>
+              <BalanceAmount 
+                theme={theme} 
+                blurred={balanceBlurred}
+                onClick={() => setBalanceBlurred(!balanceBlurred)}
+              >
+                <DollarSign size={balanceBlurred ? 24 : 32} />
+                ${paypalData.balance.toLocaleString()}
+                <BalanceToggle theme={theme}>
+                  {balanceBlurred ? <Eye size={20} /> : <EyeOff size={20} />}
+                </BalanceToggle>
+              </BalanceAmount>
+              <div style={{ marginTop: '12px' }}>
+                <ActionButton
+                  onClick={loadPayPalData}
+                  style={{ padding: '8px 16px', fontSize: '14px' }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+                  <RefreshCw size={16} />
+                  Refresh Balance
+                </ActionButton>
+            </div>
+            </BalanceSection>
+
+            <ActionButtons>
+              <ActionButton
+                primary
+                onClick={handleSendMoney}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              >
+                <Send size={20} />
+                Send Money
+              </ActionButton>
+              <ActionButton
+                onClick={handleRequestMoney}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+                <Download size={20} />
+                Request Money
+              </ActionButton>
+            </ActionButtons>
+
+            <div style={{ textAlign: 'center' }}>
+              <ActionButton
+                onClick={handlePayPalLogout}
+                style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: 'white' }}
+                 whileHover={{ scale: 1.02 }}
+                 whileTap={{ scale: 0.98 }}
+              >
+                <LogOut size={16} />
+                Disconnect PayPal
+              </ActionButton>
+                   </div>
+          </>
+        ) : (
+                  <LoginSection theme={theme}>
+          <div style={{ marginBottom: '24px', color: theme?.colors?.textSecondary || '#6b7280' }}>
+            Connect your PayPal account to start managing your finances
+                   </div>
+            <LoginButton
+              onClick={handlePayPalLogin}
+              disabled={loading}
+                 whileHover={{ scale: 1.02 }}
+                 whileTap={{ scale: 0.98 }}
+            >
+              {loading ? <RefreshCw size={20} className="spin" /> : <LogIn size={20} />}
+              {loading ? 'Connecting...' : 'Connect PayPal Account'}
+            </LoginButton>
+          </LoginSection>
+        )}
+      </PayPalContainer>
 
       {/* Quick Actions */}
       <QuickActionsGrid>
         {[
-          { title: 'Add Card', icon: <CreditCard size={20} />, action: 'addCard' },
-          { title: 'Set Goal', icon: <Target size={20} />, action: 'setGoal' },
-          { title: 'Export Data', icon: <Download size={20} />, action: 'exportData' },
+          { title: 'Set Financial Goal', icon: <Target size={20} />, action: 'setGoal' },
+          { title: 'Export Data', icon: <DownloadIcon size={20} />, action: 'exportData' },
           { title: 'Notifications', icon: <Bell size={20} />, action: 'notifications' },
           { title: 'Settings', icon: <Settings size={20} />, action: 'settings' },
-          { title: 'Help', icon: <HelpCircle size={20} />, action: 'help' }
+          { title: 'Help & Support', icon: <HelpCircle size={20} />, action: 'help' }
         ].map((action) => (
           <QuickActionButton
             key={action.action}
+            theme={theme}
             onClick={() => handleQuickAction(action.action)}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -795,159 +687,30 @@ const MyAccount = () => {
         ))}
       </QuickActionsGrid>
 
-      {/* Main Wallet and Cards Section */}
-      <Grid>
-        <WalletCard
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <WalletHeader>
-            <WalletTitle>
-              <Wallet size={24} />
-              Digital Wallet
-            </WalletTitle>
-            <Shield size={24} color="rgba(255, 255, 255, 0.7)" />
-          </WalletHeader>
-          
-          <WalletBalance>
-            <DollarSign size={36} />
-            ${walletData.balance.toLocaleString()}
-          </WalletBalance>
-          
-          <WalletSubtitle>
-            Last updated: {walletData.lastUpdated}
-          </WalletSubtitle>
-          
-          <WalletActions>
-            <WalletButton
-              onClick={handleDeposit}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="primary"
-            >
-              <Plus size={18} />
-              Deposit
-            </WalletButton>
-            <WalletButton
-              onClick={handleWithdraw}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Minus size={18} />
-              Withdraw
-            </WalletButton>
-            <WalletButton
-              onClick={handlePayment}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Zap size={18} />
-              Pay
-            </WalletButton>
-          </WalletActions>
-        </WalletCard>
-
-        <Card
-          theme={theme}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-        >
-          <CardTitle theme={theme}>
-            <CreditCard size={22} />
-            Payment Cards
-          </CardTitle>
-                     <CardManagement style={{ flex: 1 }}>
-             {cards.slice(0, 2).map((card) => (
-               <CardItem
-                 key={card.id}
-                 onClick={() => handleCardClick(card)}
-                 whileHover={{ scale: 1.02 }}
-                 whileTap={{ scale: 0.98 }}
-                 className={`${card.isDefault ? 'active' : ''} ${card.type.toLowerCase()}`}
-               >
-                 <CardHeader>
-                   <CardType>
-                     <CreditCard size={20} />
-                     {card.type}
-                     {card.isDefault && <CheckCircle size={16} />}
-                   </CardType>
-                   <Lock size={18} />
-                 </CardHeader>
-                 
-                 <CardNumber>
-                   {showCardDetails[card.id] ? card.number : '**** **** **** ****'}
-                 </CardNumber>
-                 
-                 <CardDetails>
-                   <div>
-                     <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '4px' }}>Card Holder</div>
-                     <div style={{ fontWeight: '600' }}>{card.holder}</div>
-                   </div>
-                   <div>
-                     <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '4px' }}>Expires</div>
-                     <div style={{ fontWeight: '600' }}>{showCardDetails[card.id] ? card.expiry : '**/**'}</div>
-                   </div>
-                   <div>
-                     <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '4px' }}>CVV</div>
-                     <div style={{ fontWeight: '600' }}>{card.cvv}</div>
-                   </div>
-                 </CardDetails>
-               </CardItem>
-             ))}
-             
-             {cards.length > 2 && (
-               <ViewAllButton
-                 onClick={() => navigate('/cards')}
-                 whileHover={{ scale: 1.02 }}
-                 whileTap={{ scale: 0.98 }}
-                 style={{ 
-                   marginTop: '16px', 
-                   padding: '12px 20px',
-                   background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-                   border: '2px solid #e2e8f0',
-                   borderRadius: '12px',
-                   width: '100%',
-                   justifyContent: 'center'
-                 }}
-               >
-                 View All Cards ({cards.length})
-                 <ChevronRight size={16} />
-               </ViewAllButton>
-             )}
-           </CardManagement>
-        </Card>
-      </Grid>
-
-      {/* Transactions Section */}
-      <Card
-        theme={theme}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.2 }}
-        style={{ minHeight: 'auto' }}
-      >
-        <TransactionSection>
+      {/* Recent Transactions */}
+      <TransactionsSection theme={theme}>
           <SectionHeader>
-            <CardTitle theme={theme}>
+          <SectionTitle theme={theme}>
               <TrendingUp size={22} />
-              Recent Transactions
-            </CardTitle>
-            <ViewAllButton
-              onClick={handleViewAllTransactions}
+            Recent PayPal Transactions
+          </SectionTitle>
+          <ActionButton
+            onClick={() => navigate('/transaction-history')}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+            style={{ padding: '8px 16px', fontSize: '14px' }}
             >
               View All
               <ChevronRight size={16} />
-            </ViewAllButton>
+          </ActionButton>
           </SectionHeader>
           
           <TransactionList>
-            {transactions.map((transaction) => (
+          {paypalData.transactions && paypalData.transactions.length > 0 ? (
+            paypalData.transactions.map((transaction) => (
               <TransactionItem
-                key={transaction.id}
+                key={transaction.id || transaction.transaction_id}
+                theme={theme}
                 whileHover={{ x: 4 }}
                 transition={{ duration: 0.2 }}
               >
@@ -955,87 +718,50 @@ const MyAccount = () => {
                   {getTransactionIcon(transaction.type)}
                 </TransactionIcon>
                 <TransactionInfo>
-                  <TransactionTitle>{transaction.title}</TransactionTitle>
-                  <TransactionDate>
+                  <TransactionTitle theme={theme}>
+                    {transaction.note || `${transaction.type} transaction`}
+                  </TransactionTitle>
+                  <TransactionDate theme={theme}>
                     <Calendar size={12} />
-                    {transaction.date} at {transaction.time}
+                    {new Date(transaction.created_at).toLocaleDateString()} at {new Date(transaction.created_at).toLocaleTimeString()}
                   </TransactionDate>
                 </TransactionInfo>
                 <div style={{ textAlign: 'right' }}>
                   <TransactionAmount type={transaction.type}>
-                    {transaction.amount}
+                    {transaction.type === 'send' ? '-' : '+'}${transaction.amount}
                   </TransactionAmount>
                   <StatusBadge status={transaction.status}>
                     {transaction.status}
                   </StatusBadge>
                 </div>
               </TransactionItem>
-            ))}
-          </TransactionList>
-        </TransactionSection>
-      </Card>
-
-      <AnimatePresence>
-        {showAuthModal && (
-          <AuthenticationModal
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <ModalContent
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-            >
-              <ModalTitle>
-                <Lock size={20} />
-                {authType === 'view' ? 'View Card Details' : 
-                 authType === 'deposit' ? 'Deposit Funds' :
-                 authType === 'withdraw' ? 'Withdraw Funds' : 'Make Payment'}
-              </ModalTitle>
-              
-              <div style={{ marginBottom: '16px', color: '#64748b', fontSize: '14px' }}>
-                Enter your 4-digit PIN to continue
+            ))
+          ) : (
+            <div style={{ textAlign: 'center', padding: '40px', color: theme?.colors?.textSecondary || '#6b7280' }}>
+              No transactions yet. Connect your PayPal account to see your transaction history.
               </div>
-              
-              <Input
-                type="password"
-                placeholder="Enter PIN"
-                value={pin}
-                onChange={(e) => setPin(e.target.value)}
-                maxLength={4}
-                style={{ textAlign: 'center', letterSpacing: '8px', fontSize: '18px' }}
-              />
-              
-              <ModalButtons>
-                <Button
-                  className="secondary"
-                  onClick={() => {
-                    setShowAuthModal(false);
-                    setPin('');
-                  }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="primary"
-                  onClick={handleAuthSubmit}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  Continue
-                </Button>
-              </ModalButtons>
-            </ModalContent>
-          </AuthenticationModal>
-        )}
-      </AnimatePresence>
+          )}
+        </TransactionList>
+      </TransactionsSection>
 
       <GoalsModal 
         isOpen={showGoalsModal} 
         onClose={() => setShowGoalsModal(false)} 
+      />
+
+      <PayPalLoginModal
+        isOpen={showPayPalLoginModal}
+        onClose={() => setShowPayPalLoginModal(false)}
+        onSuccess={handlePayPalLoginSuccess}
+        theme={theme}
+      />
+
+      <PayPalTransferModal
+        isOpen={showTransferModal}
+        onClose={() => setShowTransferModal(false)}
+        type={transferType}
+        onSuccess={handleTransferSuccess}
+        theme={theme}
       />
     </Container>
   );

@@ -86,7 +86,10 @@ router.post('/signup', [
         );
 
         // Send welcome email (async, don't wait for it)
-        emailService.sendWelcomeEmail(email, name).catch(error => {
+        console.log(`Attempting to send welcome email to: ${email} for user: ${name}`);
+        emailService.sendWelcomeEmail(email, name).then(success => {
+            console.log(`Welcome email sent successfully: ${success}`);
+        }).catch(error => {
             console.error('Failed to send welcome email:', error);
         });
 

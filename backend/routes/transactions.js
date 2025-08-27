@@ -235,7 +235,10 @@ router.post('/', verifyToken, [
                     reference: transactionRef
                 };
 
-                emailService.sendTransactionAlert(userEmail, user.name, transactionDetails).catch(error => {
+                console.log(`Attempting to send transaction alert email to: ${userEmail} for user: ${user.name}`);
+                emailService.sendTransactionAlert(userEmail, user.name, transactionDetails).then(success => {
+                    console.log(`Transaction alert email sent successfully: ${success}`);
+                }).catch(error => {
                     console.error('Failed to send transaction alert email:', error);
                 });
             }

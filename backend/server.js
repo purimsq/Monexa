@@ -18,6 +18,7 @@ const applicationRoutes = require('./routes/applications');
 const notificationRoutes = require('./routes/notifications');
 const exportRoutes = require('./routes/exports');
 const securityRoutes = require('./routes/security');
+const paypalRoutes = require('./routes/paypal');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -113,6 +114,7 @@ app.use('/api/applications', applicationRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/exports', exportRoutes);
 app.use('/api/security', securityRoutes);
+app.use('/api/paypal', paypalRoutes);
 
 // 404 handler
 app.use('/api/*', (req, res) => {

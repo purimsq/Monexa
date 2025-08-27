@@ -12,7 +12,9 @@ import {
   Users, 
   FileText, 
   FileCheck,
-  ExternalLink
+  ExternalLink,
+  Mail,
+  Music
 } from 'lucide-react';
 
 const SidebarContainer = styled(motion.div)`
@@ -140,7 +142,8 @@ const navigationItems = [
   { path: '/my-account', label: 'Finances', icon: CreditCard },
   { path: '/payment-history', label: 'Sales History', icon: History },
   { path: '/beneficiaries', label: 'Clients', icon: Users },
-  { path: '/documents', label: 'Beat Library', icon: FileText },
+  { path: '/documents', label: 'Beat Library', icon: Music },
+  { path: '/mail', label: 'Mail', icon: Mail },
   { path: '/applications', label: 'Analytics', icon: FileCheck },
 ];
 

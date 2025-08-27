@@ -1,17 +1,3 @@
-# Monexa - Financial Management App
-
-A modern financial management application with glassmorphism UI design.
-
-## Features
-- Glassmorphism theme with dynamic accent colors
-- Secure data export functionality
-- Two-step account deletion process
-- PayPal and M-Pesa payment integrations
-- Real-time notifications
-
-## Deployment
-This app is deployed on GitHub Pages at: https://purimsq.github.io/Monexa
-
 # 🎵 Monexa - Music Production Finance Platform
 
 A comprehensive financial management platform designed specifically for music producers, featuring advanced media playback capabilities and integrated financial tools.

@@ -286,7 +286,9 @@ export const AuthProvider = ({ children }) => {
   const updateProfile = async (profileData) => {
     try {
       const response = await apiService.updateProfile(profileData);
+      console.log('AuthContext updateProfile response:', response);
       if (response.success) {
+        console.log('Setting user to:', response.user);
         setUser(response.user);
         return { success: true };
       } else {

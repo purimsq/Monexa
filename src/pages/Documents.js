@@ -3,404 +3,164 @@ import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import {
-  Music, Upload, Filter, Play, Download,
-  FileAudio, Volume2, Trash2, Video
+  Music, Upload, Play, Download, Trash2, Video, Music2,
+  Volume2
 } from 'lucide-react';
 import apiService from '../services/api';
 import MediaPlayer from '../components/MediaPlayer';
 
+// Clean white and black theme
 const Container = styled.div`
-  padding: 24px;
-  max-width: 1200px;
+  padding: 32px;
+  min-height: 100vh;
+  background: #ffffff;
+  color: #000000;
+`;
+
+const Content = styled.div`
+  max-width: 1400px;
   margin: 0 auto;
 `;
 
 const Header = styled.div`
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 `;
 
 const Title = styled.h1`
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1f2937;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #000000;
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: 16px;
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
 `;
 
 const Subtitle = styled.p`
-  color: #6b7280;
-  font-size: 1.1rem;
-  margin-bottom: 24px;
+  color: #666666;
+  font-size: 1.125rem;
+  margin-bottom: 32px;
+  font-weight: 400;
+  line-height: 1.6;
 `;
 
 const Controls = styled.div`
   display: flex;
-  gap: 16px;
+  gap: 20px;
   align-items: center;
   flex-wrap: wrap;
+  margin-bottom: 32px;
+  padding: 24px;
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
 `;
 
 const SearchInput = styled.input`
   flex: 1;
   min-width: 300px;
-  padding: 12px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  padding: 16px 20px;
+  border: 2px solid #e5e5e5;
+  border-radius: 12px;
   font-size: 1rem;
+  background: #ffffff;
+  color: #000000;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  
+  &::placeholder {
+    color: #999999;
+  }
   
   &:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: #000000;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
   }
 `;
 
-const FilterButton = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: white;
-  cursor: pointer;
-  transition: all 0.2s;
-  
-  &:hover {
-    background: #f9fafb;
-    border-color: #9ca3af;
-  }
-`;
+
 
 const UploadButton = styled(motion.button)`
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  background: #3b82f6;
-  color: white;
+  gap: 12px;
+  padding: 16px 24px;
+  background: #000000;
+  color: #ffffff;
   border: none;
-  border-radius: 8px;
-  font-weight: 500;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   
   &:hover {
-    background: #2563eb;
+    background: #333333;
+    transform: translateY(-1px);
   }
   
   &:disabled {
-    background: #9ca3af;
+    background: #cccccc;
     cursor: not-allowed;
+    transform: none;
   }
 `;
 
-// eslint-disable-next-line no-unused-vars
-const BeatsGrid = styled(motion.div)`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
-  margin-top: 24px;
-`;
-
-// eslint-disable-next-line no-unused-vars
-const BeatCard = styled(motion.div)`
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  transition: all 0.3s;
-  
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  }
-`;
-
-// eslint-disable-next-line no-unused-vars
-const BeatImageContainer = styled.div`
-  position: relative;
-  width: 100%;
-  height: 200px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+const CategoryFilter = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-`;
-
-// eslint-disable-next-line no-unused-vars
-const BeatIcon = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 60px;
-  height: 60px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  color: white;
-  backdrop-filter: blur(10px);
-`;
-
-// eslint-disable-next-line no-unused-vars
-const PlayOverlay = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: all 0.3s;
-  cursor: pointer;
-  
-  ${BeatCard}:hover & {
-    opacity: 1;
-  }
-`;
-
-// Table play button (reusing name but different styling)
-const PlayButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: #3b82f6;
-  border: none;
-  border-radius: 50%;
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s;
-  
-  &:hover {
-    background: #2563eb;
-    transform: scale(1.05);
-  }
-  
-  &.playing {
-    background: #059669;
-  }
-`;
-
-// eslint-disable-next-line no-unused-vars
-const BeatContent = styled.div`
-  padding: 20px;
-`;
-
-// eslint-disable-next-line no-unused-vars
-const BeatHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
-`;
-
-// eslint-disable-next-line no-unused-vars
-const BeatInfo = styled.div`
-  flex: 1;
-`;
-
-// eslint-disable-next-line no-unused-vars
-const BeatTitle = styled.h3`
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 4px;
-  line-height: 1.3;
-`;
-
-// eslint-disable-next-line no-unused-vars
-const BeatGenre = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: #6b7280;
-  font-size: 0.875rem;
-`;
-
-// eslint-disable-next-line no-unused-vars
-const StatusBadge = styled.span`
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  background: #dcfce7;
-  color: #166534;
-`;
-
-// eslint-disable-next-line no-unused-vars
-const BeatMeta = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  font-size: 0.875rem;
-  color: #6b7280;
-`;
-
-// eslint-disable-next-line no-unused-vars
-const BeatActions = styled.div`
-  display: flex;
-  gap: 8px;
-  border-top: 1px solid #f3f4f6;
-  padding-top: 16px;
-`;
-
-const ActionButton = styled.button`
-  ${props => props.size === 'sm' ? `
-    padding: 8px 10px;
-    gap: 4px;
-    font-size: 0.75rem;
-  ` : `
-    flex: 1;
-    padding: 8px 12px;
-    gap: 6px;
-    font-size: 0.875rem;
-  `}
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: white;
-  color: #374151;
-  cursor: pointer;
-  transition: all 0.2s;
-  
-  &:hover {
-    background: #f9fafb;
-    border-color: #9ca3af;
-  }
-  
-  &.primary {
-    background: #3b82f6;
-    border-color: #3b82f6;
-    color: white;
-    
-    &:hover {
-      background: #2563eb;
-    }
-  }
-  
-  &.danger {
-    background: #ef4444;
-    border-color: #ef4444;
-    color: white;
-    
-    &:hover {
-      background: #dc2626;
-    }
-  }
-`;
-
-const EmptyState = styled.div`
-  text-align: center;
-  padding: 48px 24px;
-  color: #6b7280;
-`;
-
-const EmptyIcon = styled.div`
-  margin: 0 auto 16px;
-  width: 64px;
-  height: 64px;
-  background: #f3f4f6;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #9ca3af;
-`;
-
-// eslint-disable-next-line no-unused-vars
-const AudioPlayer = styled.div`
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  padding: 16px;
-  display: flex;
-  align-items: center;
   gap: 12px;
-  min-width: 300px;
-  z-index: 1000;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
 `;
 
-// eslint-disable-next-line no-unused-vars
-const PlayerInfo = styled.div`
-  flex: 1;
-`;
-
-// eslint-disable-next-line no-unused-vars
-const PlayerTitle = styled.div`
-  font-weight: 600;
-  color: #1f2937;
-  font-size: 0.875rem;
-`;
-
-// eslint-disable-next-line no-unused-vars
-const PlayerControls = styled.div`
+const CategoryChip = styled.button`
   display: flex;
+  align-items: center;
   gap: 8px;
-  align-items: center;
-`;
-
-// eslint-disable-next-line no-unused-vars
-const PlayerButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: #3b82f6;
-  border: none;
-  border-radius: 50%;
-  color: white;
+  padding: 10px 16px;
+  border: 2px solid ${props => props.active ? '#000000' : '#e5e5e5'};
+  border-radius: 25px;
+  background: ${props => props.active ? '#000000' : '#ffffff'};
+  color: ${props => props.active ? '#ffffff' : '#000000'};
+  font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   
   &:hover {
-    background: #2563eb;
+    background: ${props => props.active ? '#000000' : '#f5f5f5'};
+    border-color: ${props => props.active ? '#000000' : '#000000'};
   }
 `;
 
-// eslint-disable-next-line no-unused-vars
-const VolumeSlider = styled.input`
-  width: 80px;
-`;
+
 
 // Table Components
 const BeatsTable = styled(motion.div)`
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 2px solid #f0f0f0;
   overflow: hidden;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 `;
 
 const TableHeader = styled.div`
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
+  background: #fafafa;
+  border-bottom: 2px solid #f0f0f0;
 `;
 
 const HeaderRow = styled.div`
   display: flex;
   align-items: center;
-  padding: 16px 24px;
+  padding: 20px 24px;
 `;
 
 const HeaderCell = styled.div`
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.875rem;
-  color: #374151;
+  color: #000000;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   width: ${props => props.width || 'auto'};
@@ -408,18 +168,18 @@ const HeaderCell = styled.div`
 `;
 
 const TableBody = styled.div`
-  background: white;
+  background: #ffffff;
 `;
 
 const TableRow = styled(motion.div)`
   display: flex;
   align-items: center;
-  padding: 16px 24px;
-  border-bottom: 1px solid #f3f4f6;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f0f0f0;
   transition: all 0.2s ease;
   
   &:hover {
-    background: #f9fafb;
+    background: #fafafa;
   }
   
   &:last-child {
@@ -428,25 +188,49 @@ const TableRow = styled(motion.div)`
 `;
 
 const PlayCell = styled.div`
-  width: 50px;
+  width: 60px;
   flex-shrink: 0;
   display: flex;
   justify-content: center;
 `;
 
+const PlayButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: #000000;
+  border: none;
+  border-radius: 50%;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #333333;
+    transform: scale(1.05);
+  }
+  
+  &.playing {
+    background: #000000;
+  }
+`;
+
 const TrackCell = styled.div`
-  width: 300px;
+  width: 400px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 `;
 
 const TrackIcon = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: #f5f5f5;
+  border: 2px solid #e5e5e5;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -459,56 +243,131 @@ const TrackInfo = styled.div`
 `;
 
 const TrackTitle = styled.div`
-  font-weight: 600;
-  color: #1f2937;
-  font-size: 0.875rem;
-  margin-bottom: 2px;
+  font-weight: 700;
+  color: #000000;
+  font-size: 1rem;
+  margin-bottom: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 `;
 
 const TrackSubtitle = styled.div`
-  color: #6b7280;
-  font-size: 0.75rem;
+  color: #666666;
+  font-size: 0.875rem;
+  font-weight: 500;
 `;
 
 const FormatCell = styled.div`
-  width: 100px;
+  width: 120px;
   flex-shrink: 0;
 `;
 
 const FormatBadge = styled.span`
   display: inline-block;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
   font-size: 0.75rem;
-  font-weight: 500;
-  background: #dbeafe;
-  color: #1e40af;
+  font-weight: 700;
+  background: #f0f0f0;
+  color: #000000;
   text-transform: uppercase;
+  border: 1px solid #e5e5e5;
 `;
 
 const SizeCell = styled.div`
-  width: 100px;
+  width: 120px;
   flex-shrink: 0;
-  color: #6b7280;
+  color: #666666;
   font-size: 0.875rem;
+  font-weight: 500;
 `;
 
 const DateCell = styled.div`
-  width: 140px;
+  width: 160px;
   flex-shrink: 0;
-  color: #6b7280;
+  color: #666666;
   font-size: 0.875rem;
+  font-weight: 500;
 `;
 
 const ActionsCell = styled.div`
-  width: 160px;
+  width: 180px;
   flex-shrink: 0;
   display: flex;
-  gap: 8px;
+  gap: 12px;
   justify-content: flex-end;
+`;
+
+const ActionButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 2px solid #e5e5e5;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #666666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #f5f5f5;
+    border-color: #000000;
+    color: #000000;
+  }
+  
+  &.primary {
+    background: #000000;
+    border-color: #000000;
+    color: #ffffff;
+    
+    &:hover {
+      background: #333333;
+      border-color: #333333;
+    }
+  }
+  
+  &.danger {
+    &:hover {
+      background: #f5f5f5;
+      border-color: #ff0000;
+      color: #ff0000;
+    }
+  }
+`;
+
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 80px 24px;
+  color: #666666;
+`;
+
+const EmptyIcon = styled.div`
+  margin: 0 auto 24px;
+  width: 80px;
+  height: 80px;
+  background: #f5f5f5;
+  border: 2px solid #e5e5e5;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999999;
+`;
+
+const EmptyTitle = styled.h3`
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 8px;
+`;
+
+const EmptySubtitle = styled.p`
+  font-size: 1rem;
+  color: #666666;
+  font-weight: 400;
 `;
 
 const Documents = () => {
@@ -519,11 +378,12 @@ const Documents = () => {
   const [currentDocument, setCurrentDocument] = useState(null);
   const [isPlayerMinimized, setIsPlayerMinimized] = useState(false);
 
+  const [selectedCategory, setSelectedCategory] = useState('all');
+
+
   useEffect(() => {
     loadDocuments();
   }, []);
-
-
 
   const loadDocuments = async () => {
     try {
@@ -689,12 +549,29 @@ const Documents = () => {
     await handleDownload(document);
   };
 
-  const filteredDocuments = documents.filter(doc => 
-    (doc.category === 'beat' || doc.category === 'video') && 
-    (doc.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-     doc.filename?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     doc.file_name?.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Enhanced filtering with categories and search
+  const filteredDocuments = documents.filter(doc => {
+    const matchesSearch = doc.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         doc.filename?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         doc.file_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = selectedCategory === 'all' || doc.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
+
+  // Get unique categories for filter
+  const categories = ['all', ...new Set(documents.map(doc => doc.category).filter(Boolean))];
+
+
+
+
+
+
+
+  const handleCategoryFilter = (category) => {
+    setSelectedCategory(category);
+  };
 
   const formatFileSize = (bytes) => {
     if (bytes === 0) return '0 Bytes';
@@ -710,150 +587,161 @@ const Documents = () => {
 
   return (
     <Container>
-      <Header>
-        <Title>
-          <Music size={28} />
-          Media Library
-        </Title>
-        <Subtitle>Manage your music and video collection, track your creative portfolio</Subtitle>
-        
-        <Controls>
-          <SearchInput 
-            placeholder="Search media by title or filename..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <FilterButton>
-            <Filter size={16} />
-            Filter
-          </FilterButton>
-          <UploadButton
-            onClick={handleUpload}
-            disabled={uploading}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Upload size={16} />
-            {uploading ? 'Uploading...' : 'Upload Media'}
-          </UploadButton>
-          <input
-            id="file-upload"
-            type="file"
-            style={{ display: 'none' }}
-            onChange={handleFileUpload}
-            accept="audio/*,video/*,.mp3,.wav,.ogg,.flac,.aac,.m4a,.mp4,.mov,.avi,.webm"
-          />
-        </Controls>
-      </Header>
+      <Content>
+        <Header>
+          <Title>
+            <Music size={32} />
+            Beat Library
+          </Title>
+          <Subtitle>Manage your music collection with precision and style</Subtitle>
+          
+          <Controls>
+            <SearchInput 
+              placeholder="Search beats by title or filename..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <UploadButton
+              onClick={handleUpload}
+              disabled={uploading}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Upload size={20} />
+              {uploading ? 'Uploading...' : 'Upload Beat'}
+            </UploadButton>
+            <input
+              id="file-upload"
+              type="file"
+              style={{ display: 'none' }}
+              onChange={handleFileUpload}
+              accept="audio/*,video/*,.mp3,.wav,.ogg,.flac,.aac,.m4a,.mp4,.mov,.avi,.webm"
+            />
+          </Controls>
 
-      {loading ? (
-        <EmptyState>
-          <EmptyIcon>
-            <Volume2 size={24} />
-          </EmptyIcon>
-          <h3>Loading beats...</h3>
-        </EmptyState>
-      ) : filteredDocuments.length === 0 ? (
-        <EmptyState>
-          <EmptyIcon>
-            <Music size={24} />
-          </EmptyIcon>
-          <h3>No media found</h3>
-          <p>Upload your first audio or video file to get started!</p>
-        </EmptyState>
-      ) : (
-        <BeatsTable
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-        >
-          <TableHeader>
-            <HeaderRow>
-              <HeaderCell width="50px"></HeaderCell>
-              <HeaderCell width="300px">Track</HeaderCell>
-              <HeaderCell width="100px">Format</HeaderCell>
-              <HeaderCell width="100px">Size</HeaderCell>
-              <HeaderCell width="140px">Upload Date</HeaderCell>
-              <HeaderCell width="160px">Actions</HeaderCell>
-            </HeaderRow>
-          </TableHeader>
-          <TableBody>
-            {filteredDocuments.map((document, index) => (
-              <TableRow 
-                key={document.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.05 }}
+          {/* Category Filter */}
+          <CategoryFilter>
+            {categories.map(category => (
+              <CategoryChip
+                key={category}
+                active={selectedCategory === category}
+                onClick={() => handleCategoryFilter(category)}
               >
-                <PlayCell>
-                  <PlayButton 
-                    onClick={() => handlePlay(document)}
-                    className={currentDocument?.id === document.id ? "playing" : ""}
-                  >
-                    <Play size={16} />
-                  </PlayButton>
-                </PlayCell>
-                
-                <TrackCell>
-                  <TrackIcon>
-                    {document.file_type?.startsWith('video/') || document.file_name?.toLowerCase().includes('.mp4') ? (
-                      <Video size={20} color="#FF6B35" />
-                    ) : (
-                      <FileAudio size={20} color="#FF6B35" />
-                    )}
-                  </TrackIcon>
-                  <TrackInfo>
-                    <TrackTitle>{document.title || document.file_name}</TrackTitle>
-                    <TrackSubtitle>
-                      {document.file_type?.startsWith('video/') || document.file_name?.toLowerCase().includes('.mp4') 
-                        ? 'Video Track' 
-                        : 'Audio Track'
-                      }
-                    </TrackSubtitle>
-                  </TrackInfo>
-                </TrackCell>
-                
-                <FormatCell>
-                  <FormatBadge>
-                    {getFileExtension(document.file_name || document.filename)}
-                  </FormatBadge>
-                </FormatCell>
-                
-                <SizeCell>
-                  {formatFileSize(document.file_size || 0)}
-                </SizeCell>
-                
-                <DateCell>
-                  {new Date(document.uploaded_at || document.created_at).toLocaleDateString()}
-                </DateCell>
-                
-                <ActionsCell>
-                  <ActionButton onClick={() => handleDownload(document)} size="sm">
-                    <Download size={14} />
-                  </ActionButton>
-                  <ActionButton onClick={() => handleDelete(document)} className="danger" size="sm">
-                    <Trash2 size={14} />
-                  </ActionButton>
-                </ActionsCell>
-              </TableRow>
+                {category === 'all' ? 'All Beats' : category.charAt(0).toUpperCase() + category.slice(1)}
+              </CategoryChip>
             ))}
-          </TableBody>
-        </BeatsTable>
-      )}
+          </CategoryFilter>
+        </Header>
 
-      {/* Media Player */}
-      <AnimatePresence>
-        {currentDocument && (
-          <MediaPlayer
-            document={currentDocument}
-            onClose={handleClosePlayer}
-            onDelete={handleDeleteFromPlayer}
-            onDownload={handleDownloadFromPlayer}
-            isMinimized={isPlayerMinimized}
-            onToggleSize={handleTogglePlayerSize}
-          />
+        {loading ? (
+          <EmptyState>
+            <EmptyIcon>
+              <Volume2 size={32} />
+            </EmptyIcon>
+            <EmptyTitle>Loading beats...</EmptyTitle>
+          </EmptyState>
+        ) : filteredDocuments.length === 0 ? (
+          <EmptyState>
+            <EmptyIcon>
+              <Music size={32} />
+            </EmptyIcon>
+            <EmptyTitle>No beats found</EmptyTitle>
+            <EmptySubtitle>Upload your first beat to get started!</EmptySubtitle>
+          </EmptyState>
+        ) : (
+          <BeatsTable
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+          >
+            <TableHeader>
+              <HeaderRow>
+                <HeaderCell width="60px"></HeaderCell>
+                <HeaderCell width="400px">Track</HeaderCell>
+                <HeaderCell width="120px">Format</HeaderCell>
+                <HeaderCell width="120px">Size</HeaderCell>
+                <HeaderCell width="160px">Upload Date</HeaderCell>
+                <HeaderCell width="180px">Actions</HeaderCell>
+              </HeaderRow>
+            </TableHeader>
+            <TableBody>
+              {filteredDocuments.map((document, index) => (
+                <TableRow 
+                  key={document.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.05 }}
+                >
+                  <PlayCell>
+                    <PlayButton 
+                      onClick={() => handlePlay(document)}
+                      className={currentDocument?.id === document.id ? "playing" : ""}
+                    >
+                      <Play size={20} />
+                    </PlayButton>
+                  </PlayCell>
+                  
+                  <TrackCell>
+                    <TrackIcon>
+                      {document.file_type?.startsWith('video/') || document.file_name?.toLowerCase().includes('.mp4') ? (
+                        <Video size={24} color="#000000" />
+                      ) : (
+                        <Music2 size={24} color="#000000" />
+                      )}
+                    </TrackIcon>
+                    <TrackInfo>
+                      <TrackTitle>{document.title || document.file_name}</TrackTitle>
+                      <TrackSubtitle>
+                        {document.file_type?.startsWith('video/') || document.file_name?.toLowerCase().includes('.mp4') 
+                          ? 'Video Track' 
+                          : 'Audio Track'
+                        }
+                      </TrackSubtitle>
+                    </TrackInfo>
+                  </TrackCell>
+                  
+                  <FormatCell>
+                    <FormatBadge>
+                      {getFileExtension(document.file_name || document.filename)}
+                    </FormatBadge>
+                  </FormatCell>
+                  
+                  <SizeCell>
+                    {formatFileSize(document.file_size || 0)}
+                  </SizeCell>
+                  
+                  <DateCell>
+                    {new Date(document.uploaded_at || document.created_at).toLocaleDateString()}
+                  </DateCell>
+                  
+                  <ActionsCell>
+                    <ActionButton onClick={() => handleDownload(document)}>
+                      <Download size={18} />
+                    </ActionButton>
+                    <ActionButton onClick={() => handleDelete(document)} className="danger">
+                      <Trash2 size={18} />
+                    </ActionButton>
+                  </ActionsCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </BeatsTable>
         )}
-      </AnimatePresence>
+
+        {/* Media Player */}
+        <AnimatePresence>
+          {currentDocument && (
+            <MediaPlayer
+              document={currentDocument}
+              onClose={handleClosePlayer}
+              onDelete={handleDeleteFromPlayer}
+              onDownload={handleDownloadFromPlayer}
+              isMinimized={isPlayerMinimized}
+              onToggleSize={handleTogglePlayerSize}
+            />
+          )}
+        </AnimatePresence>
+      </Content>
     </Container>
   );
 };

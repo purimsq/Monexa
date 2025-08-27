@@ -14,6 +14,7 @@ const router = express.Router();
 // Update user profile
 router.put('/profile', verifyToken, [
     body('name').optional().trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
+    body('email').optional().isEmail().normalizeEmail().withMessage('Valid email required'),
     body('phone').optional().trim(),
     body('location').optional().trim(),
     body('experience').optional().trim(),
@@ -31,7 +32,10 @@ router.put('/profile', verifyToken, [
             });
         }
 
-        const { name, phone, location, experience, bio, role, currentPassword } = req.body;
+        const { name, email, phone, location, experience, bio, role, currentPassword } = req.body;
+        
+        console.log('Full request body:', req.body);
+        console.log('Profile update request:', { name, email, phone, location, experience, bio, role });
         
         // Verify current password
         const user = await database.get(
@@ -47,6 +51,21 @@ router.put('/profile', verifyToken, [
             });
         }
 
+        // Check if email is being updated and if it's already taken by another user
+        if (email !== undefined && email !== req.user.email) {
+            const existingUser = await database.get(
+                'SELECT id FROM users WHERE email = ? AND id != ?',
+                [email, req.user.id]
+            );
+            
+            if (existingUser) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Email is already taken by another user'
+                });
+            }
+        }
+
         const updateFields = [];
         const updateValues = [];
 
@@ -54,6 +73,10 @@ router.put('/profile', verifyToken, [
         if (name !== undefined) {
             updateFields.push('name = ?');
             updateValues.push(name);
+        }
+        if (email !== undefined) {
+            updateFields.push('email = ?');
+            updateValues.push(email);
         }
         if (phone !== undefined) {
             updateFields.push('phone = ?');
@@ -86,6 +109,9 @@ router.put('/profile', verifyToken, [
         updateFields.push('updated_at = CURRENT_TIMESTAMP');
         updateValues.push(req.user.id);
 
+        console.log('Update query:', `UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`);
+        console.log('Update values:', updateValues);
+        
         await database.run(
             `UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`,
             updateValues
@@ -96,6 +122,8 @@ router.put('/profile', verifyToken, [
             'SELECT id, name, email, role, phone, location, experience, bio, avatar FROM users WHERE id = ?',
             [req.user.id]
         );
+
+        console.log('Updated user data:', updatedUser);
 
         res.json({
             success: true,
@@ -730,13 +758,13 @@ router.post('/export-data', verifyToken, [
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
-                user: process.env.EMAIL_ADDRESS || 'your-email@gmail.com',
-                pass: process.env.EMAIL_PASSWORD || 'your-app-password'
+                user: process.env.EMAIL_ADDRESS,
+                pass: process.env.EMAIL_PASSWORD
             }
         });
 
         const mailOptions = {
-            from: process.env.EMAIL_ADDRESS || 'your-email@gmail.com',
+            from: process.env.EMAIL_ADDRESS,
             to: user.email,
             subject: 'Monexa - Your Data Export',
             html: `
@@ -779,7 +807,15 @@ router.post('/export-data', verifyToken, [
             ]
         };
 
-        await transporter.sendMail(mailOptions);
+        console.log(`Attempting to send export email to: ${user.email}`);
+        
+        try {
+            await transporter.sendMail(mailOptions);
+            console.log(`Export email sent successfully to: ${user.email}`);
+        } catch (emailError) {
+            console.error('Export email error:', emailError);
+            throw new Error('Failed to send export email');
+        }
 
         // Clean up files after sending
         setTimeout(() => {

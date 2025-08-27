@@ -504,6 +504,35 @@ class ApiService {
     async healthCheck() {
         return this.get('/health');
     }
+
+    // PayPal Methods
+    async connectPayPal(email, password) {
+        return this.post('/paypal/connect', { email, password });
+    }
+
+    async getPayPalBalance() {
+        return this.get('/paypal/balance');
+    }
+
+    async sendPayPalMoney(toEmail, amount, note = '') {
+        return this.post('/paypal/send', { toEmail, amount, note });
+    }
+
+    async requestPayPalMoney(fromEmail, amount, note = '') {
+        return this.post('/paypal/request', { fromEmail, amount, note });
+    }
+
+    async getPayPalTransactions(limit = 10, offset = 0) {
+        return this.get(`/paypal/transactions?limit=${limit}&offset=${offset}`);
+    }
+
+    async disconnectPayPal() {
+        return this.delete('/paypal/disconnect');
+    }
+
+    async getPayPalStatus() {
+        return this.get('/paypal/status');
+    }
 }
 
 // Create singleton instance
