@@ -2,9 +2,13 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
-import { Users, Plus, Edit, Trash2, Search, Filter } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Search, Filter, Mail, Music, Link, CreditCard } from 'lucide-react';
 import apiService from '../services/api';
 import AddBeneficiaryModal from '../components/AddBeneficiaryModal';
+import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
+import ClientDetailsModal from '../components/ClientDetailsModal';
+import PasswordVerificationModal from '../components/PasswordVerificationModal';
+import EditClientModal from '../components/EditClientModal';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -167,28 +171,48 @@ const ClientEmail = styled.p`
   margin-bottom: 4px;
 `;
 
-const ClientStats = styled.div`
-  display: flex;
-  gap: 16px;
+const ClientDetails = styled.div`
+  display: grid;
+  gap: 12px;
   margin-bottom: 16px;
 `;
 
-const StatItem = styled.div`
-  text-align: center;
-`;
-
-const StatNumber = styled.div`
-  font-size: 20px;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 4px;
-`;
-
-const StatLabel = styled.div`
-  font-size: 12px;
+const DetailItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 14px;
+`;
+
+const DetailIcon = styled.div`
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+`;
+
+const DetailText = styled.span`
+  color: #374151;
+  font-weight: 500;
+`;
+
+const LinksContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+`;
+
+const LinkTag = styled.div`
+  background: #f1f5f9;
+  color: #475569;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 `;
 
 const ClientActions = styled.div`
@@ -354,6 +378,15 @@ const Beneficiaries = () => {
   const [beneficiaries, setBeneficiaries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddBeneficiaryModal, setShowAddBeneficiaryModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [clientToEdit, setClientToEdit] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   // Load beneficiaries on component mount
   useEffect(() => {
@@ -383,18 +416,74 @@ const Beneficiaries = () => {
     loadBeneficiaries(); // Reload beneficiaries when a new one is added
   };
 
-  const handleEditClient = (clientId) => {
-    toast.info(`Editing client ${clientId}...`, {
-      position: "bottom-right",
-      autoClose: 2000,
-    });
+  const handleClientClick = (client) => {
+    setSelectedClient(client);
+    setShowDetailsModal(true);
   };
 
-  const handleDeleteClient = (clientId) => {
-    toast.error(`Client ${clientId} deleted!`, {
-      position: "bottom-right",
-      autoClose: 3000,
-    });
+  const handleEditClient = (client) => {
+    setClientToEdit(client);
+    setShowPasswordModal(true);
+  };
+
+  const handlePasswordVerify = async (password) => {
+    try {
+      setPasswordLoading(true);
+      
+      // Verify password with backend
+      const response = await apiService.verifyPassword(password);
+      
+      if (response.success) {
+        setShowPasswordModal(false);
+        setPasswordLoading(false);
+        
+        // Open edit modal with client data
+        setShowEditModal(true);
+      } else {
+        toast.error('Incorrect password');
+      }
+    } catch (error) {
+      console.error('Password verification failed:', error);
+      toast.error('Password verification failed');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const handleClientUpdated = (updatedClient) => {
+    setBeneficiaries(prev => 
+      prev.map(b => b.id === updatedClient.id ? updatedClient : b)
+    );
+    setShowEditModal(false);
+    setClientToEdit(null);
+  };
+
+  const handleDeleteClient = (client) => {
+    setClientToDelete(client);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!clientToDelete) return;
+    
+    try {
+      setDeleteLoading(true);
+      const response = await apiService.deleteBeneficiary(clientToDelete.id);
+      
+      if (response.success) {
+        toast.success('Client deleted successfully!');
+        setBeneficiaries(prev => prev.filter(b => b.id !== clientToDelete.id));
+        setShowDeleteModal(false);
+        setClientToDelete(null);
+      } else {
+        toast.error(response.error || 'Failed to delete client');
+      }
+    } catch (error) {
+      console.error('Failed to delete client:', error);
+      toast.error('Failed to delete client. Please try again.');
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   const filteredClients = beneficiaries.filter(beneficiary =>
@@ -439,37 +528,65 @@ const Beneficiaries = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: index * 0.1 }}
+            onClick={() => handleClientClick(beneficiary)}
+            style={{ cursor: 'pointer' }}
           >
             <ClientHeader>
-              <ClientAvatar>{beneficiary.name?.charAt(0) || 'B'}</ClientAvatar>
+              <ClientAvatar>{beneficiary.name?.charAt(0) || 'C'}</ClientAvatar>
               <ClientInfo>
                 <ClientName>{beneficiary.name}</ClientName>
                 <ClientEmail>{beneficiary.email}</ClientEmail>
               </ClientInfo>
             </ClientHeader>
 
-            <ClientStats>
-              <StatItem>
-                <StatNumber>{beneficiary.account_number}</StatNumber>
-                <StatLabel>Account</StatLabel>
-              </StatItem>
-              <StatItem>
-                <StatNumber>{beneficiary.bank_name}</StatNumber>
-                <StatLabel>Bank</StatLabel>
-              </StatItem>
-              <StatItem>
-                <StatNumber>{beneficiary.relationship}</StatNumber>
-                <StatLabel>Relationship</StatLabel>
-              </StatItem>
-            </ClientStats>
+            <ClientDetails>
+              {beneficiary.artist_name && (
+                <DetailItem>
+                  <DetailIcon>
+                    <Music size={14} />
+                  </DetailIcon>
+                  <span>Artist:</span>
+                  <DetailText>{beneficiary.artist_name}</DetailText>
+                </DetailItem>
+              )}
+              
+              <DetailItem>
+                <DetailIcon>
+                  <Mail size={14} />
+                </DetailIcon>
+                <span>Email:</span>
+                <DetailText>{beneficiary.email}</DetailText>
+              </DetailItem>
+
+              {beneficiary.paypal_email && (
+                <DetailItem>
+                  <DetailIcon>
+                    <CreditCard size={14} />
+                  </DetailIcon>
+                  <span>PayPal:</span>
+                  <DetailText>{beneficiary.paypal_email}</DetailText>
+                </DetailItem>
+              )}
+            </ClientDetails>
+
+            {beneficiary.links && beneficiary.links.length > 0 && (
+              <LinksContainer>
+                {beneficiary.links.map((link, index) => (
+                  <LinkTag key={index}>
+                    <Link size={12} />
+                    {link.name}
+                  </LinkTag>
+                ))}
+              </LinksContainer>
+            )}
 
             <ClientActions>
-              <ActionButton onClick={() => handleEditClient(beneficiary.id)}>
-                <Edit size={16} />
-              </ActionButton>
               <ActionButton 
                 className="danger"
-                onClick={() => handleDeleteClient(beneficiary.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteClient(beneficiary);
+                }}
               >
                 <Trash2 size={16} />
               </ActionButton>
@@ -482,6 +599,53 @@ const Beneficiaries = () => {
         isOpen={showAddBeneficiaryModal}
         onClose={() => setShowAddBeneficiaryModal(false)}
         onBeneficiaryAdded={handleBeneficiaryAdded}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setClientToDelete(null);
+        }}
+        onConfirm={confirmDelete}
+        itemName={clientToDelete?.name || 'Client'}
+        itemType="Client"
+        loading={deleteLoading}
+      />
+
+      <ClientDetailsModal
+        isOpen={showDetailsModal}
+        onClose={() => {
+          setShowDetailsModal(false);
+          setSelectedClient(null);
+        }}
+        client={selectedClient}
+        onEdit={handleEditClient}
+        onDelete={(client) => {
+          setShowDetailsModal(false);
+          setSelectedClient(null);
+          handleDeleteClient(client);
+        }}
+      />
+
+      <PasswordVerificationModal
+        isOpen={showPasswordModal}
+        onClose={() => {
+          setShowPasswordModal(false);
+          setClientToEdit(null);
+        }}
+        onVerify={handlePasswordVerify}
+        loading={passwordLoading}
+      />
+
+      <EditClientModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setClientToEdit(null);
+        }}
+        client={clientToEdit}
+        onClientUpdated={handleClientUpdated}
       />
     </Container>
   );

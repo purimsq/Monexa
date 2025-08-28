@@ -114,6 +114,16 @@ class ApiService {
         return this.request(endpoint, { method: 'DELETE' });
     }
 
+    // Verify password for sensitive operations
+    async verifyPassword(password) {
+        return this.post('/auth/verify-password', { password });
+    }
+
+    // Update beneficiary/client
+    async updateBeneficiary(id, data) {
+        return this.request(`/beneficiaries/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+    }
+
     // File upload request
     async upload(endpoint, formData) {
         const url = `${API_BASE_URL}${endpoint}`;

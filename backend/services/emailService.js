@@ -80,11 +80,15 @@ class EmailService {
     }
 
     /**
-     * Send email with beat attachment
+     * Send email with beat attachment(s)
      */
     async sendBeatEmail(userEmail, userName, subject, message, attachmentData = null, replyTo = null) {
-        // For large attachments, use a temporary file approach
-        if (attachmentData && attachmentData.content && attachmentData.content.length > 10000) {
+        // Check if we have multiple attachments (array) or single attachment
+        const hasMultipleAttachments = Array.isArray(attachmentData);
+        const hasSingleAttachment = attachmentData && !Array.isArray(attachmentData) && attachmentData.content;
+        
+        // For multiple attachments or large single attachments, use temporary file approach
+        if (hasMultipleAttachments || (hasSingleAttachment && attachmentData.content.length > 10000)) {
             return this._callPythonServiceWithTempFile('beat', {
                 to: userEmail,
                 name: userName,
@@ -104,6 +108,46 @@ class EmailService {
             });
         }
     }
+
+    /**
+     * Send email with large file notification
+     */
+    async sendLargeFileNotification(userEmail, userName, subject, message, attachmentData, replyTo = null) {
+        try {
+            const fileList = attachmentData.map((file, index) => 
+                `${index + 1}. ${file.name} (${this._formatFileSize(file.data ? file.data.length * 0.75 : 0)})`
+            ).join('\n');
+            
+            const notificationMessage = message + '\n\n⚠️ **LARGE FILE NOTICE:**\n\n' +
+                'The following files were too large to send via email (>25MB total):\n\n' +
+                fileList + '\n\n' +
+                'Please contact the sender to arrange an alternative method for file sharing.';
+            
+            return this._callPythonService('notification', {
+                to: userEmail,
+                name: userName,
+                subject: subject + ' - Large Files (Not Attached)',
+                message: notificationMessage,
+                replyTo: replyTo
+            });
+        } catch (error) {
+            console.error('Error sending large file notification:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Format file size for display
+     */
+    _formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+
 
     /**
      * Send password reset email
@@ -269,7 +313,8 @@ The Monexa Team`;
                 }
 
                 const pythonProcess = spawn('python', pythonArgs, {
-                    env: { ...process.env }
+                    env: { ...process.env },
+                    timeout: 30000 // 30 second timeout
                 });
 
                 let output = '';

@@ -24,7 +24,7 @@ router.post('/send', verifyToken, [
             });
         }
 
-        const { recipient, subject, body, template, attachment } = req.body;
+        const { recipient, subject, body, template, attachment, attachments } = req.body;
         const userId = req.user.id;
 
         // Get user's profile email for Reply-To header
@@ -40,35 +40,76 @@ router.post('/send', verifyToken, [
 
         const userEmail = userResult.email;
 
-        // Send email using Python service
-        let emailSent = false;
-        
-        if (attachment && template === 'beat') {
-            // Send email with beat attachment
-            const attachmentData = {
-                filename: attachment.name,
-                content: attachment.data,
-                content_type: attachment.type
-            };
-            
-            emailSent = await emailService.sendBeatEmail(
-                recipient,
-                req.user.name || 'User',
-                subject,
-                body,
-                attachmentData,
-                userEmail // Pass user's email as Reply-To
-            );
-        } else {
-            // Send regular notification email
-            emailSent = await emailService.sendNotificationEmail(
-                recipient,
-                req.user.name || 'User',
-                subject,
-                body,
-                userEmail // Pass user's email as Reply-To
-            );
-        }
+                       // Send email using Python service
+               let emailSent = false;
+
+                               if (attachments && attachments.length > 0 && template === 'beat') {
+                    // Check total size of attachments
+                    const totalSize = attachments.reduce((total, attachment) => {
+                        return total + (attachment.data ? attachment.data.length * 0.75 : 0); // Approximate size in bytes
+                    }, 0);
+                    
+                    const maxSize = 25 * 1024 * 1024; // 25MB in bytes
+                    
+                    if (totalSize > maxSize) {
+                        // Files are too large, send notification instead
+                        const attachmentDataArray = attachments.map(attachment => ({
+                            name: attachment.name,
+                            data: attachment.data,
+                            type: attachment.type
+                        }));
+
+                        emailSent = await emailService.sendLargeFileNotification(
+                            recipient,
+                            req.user.name || 'User',
+                            subject,
+                            body,
+                            attachmentDataArray,
+                            userEmail // Pass user's email as Reply-To
+                        );
+                    } else {
+                        // Files are within size limit, send as regular attachments
+                        const attachmentDataArray = attachments.map(attachment => ({
+                            filename: attachment.name,
+                            content: attachment.data,
+                            content_type: attachment.type
+                        }));
+
+                        emailSent = await emailService.sendBeatEmail(
+                            recipient,
+                            req.user.name || 'User',
+                            subject,
+                            body,
+                            attachmentDataArray,
+                            userEmail // Pass user's email as Reply-To
+                        );
+                    }
+               } else if (attachment && template === 'beat') {
+                   // Send email with single beat attachment (backward compatibility)
+                   const attachmentData = {
+                       filename: attachment.name,
+                       content: attachment.data,
+                       content_type: attachment.type
+                   };
+
+                   emailSent = await emailService.sendBeatEmail(
+                       recipient,
+                       req.user.name || 'User',
+                       subject,
+                       body,
+                       attachmentData,
+                       userEmail // Pass user's email as Reply-To
+                   );
+               } else {
+                   // Send regular notification email
+                   emailSent = await emailService.sendNotificationEmail(
+                       recipient,
+                       req.user.name || 'User',
+                       subject,
+                       body,
+                       userEmail // Pass user's email as Reply-To
+                   );
+               }
 
         if (!emailSent) {
             throw new Error('Failed to send email via Python service');

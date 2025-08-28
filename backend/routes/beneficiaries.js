@@ -11,16 +11,23 @@ router.get('/', verifyToken, async (req, res) => {
     try {
         const beneficiaries = await database.query(
             `SELECT id, name, email, phone, account_number, bank_name, 
-                    relationship, is_active, created_at, updated_at 
+                    relationship, artist_name, paypal_email, links,
+                    is_active, created_at, updated_at 
              FROM beneficiaries 
              WHERE user_id = ? AND is_active = 1 
              ORDER BY name ASC`,
             [req.user.id]
         );
 
+        // Parse links JSON for each beneficiary
+        const processedBeneficiaries = beneficiaries.map(beneficiary => ({
+            ...beneficiary,
+            links: beneficiary.links ? JSON.parse(beneficiary.links) : []
+        }));
+
         res.json({
             success: true,
-            beneficiaries
+            beneficiaries: processedBeneficiaries
         });
 
     } catch (error) {
@@ -69,15 +76,42 @@ router.get('/:beneficiaryId', verifyToken, async (req, res) => {
 // Add new beneficiary
 router.post('/', verifyToken, [
     body('name').trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
-    body('email').optional().isEmail().normalizeEmail().withMessage('Valid email required'),
+    body('email').trim().custom((value) => {
+        if (!value || value === '') {
+            throw new Error('Email is required');
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) {
+            throw new Error('Valid email required');
+        }
+        return true;
+    }),
     body('phone').optional().trim(),
     body('account_number').optional().trim(),
     body('bank_name').optional().trim(),
-    body('relationship').optional().trim()
+    body('relationship').optional().trim(),
+    body('artist_name').optional().trim(),
+    body('paypal_email').optional().trim().custom((value) => {
+        if (value && value !== '') {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(value)) {
+                throw new Error('Valid PayPal email required');
+            }
+        }
+        return true;
+    }),
+    body('links').optional().custom((value) => {
+        if (value && !Array.isArray(value)) {
+            throw new Error('Links must be an array');
+        }
+        return true;
+    })
 ], async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
+            console.error('Validation errors:', errors.array());
+            console.error('Request body:', req.body);
             return res.status(400).json({
                 success: false,
                 error: 'Validation failed',
@@ -85,7 +119,7 @@ router.post('/', verifyToken, [
             });
         }
 
-        const { name, email, phone, account_number, bank_name, relationship } = req.body;
+        const { name, email, phone, account_number, bank_name, relationship, artist_name, paypal_email, links } = req.body;
 
         // Check if beneficiary with same name already exists
         const existingBeneficiary = await database.get(
@@ -106,33 +140,44 @@ router.post('/', verifyToken, [
         await database.run(
             `INSERT INTO beneficiaries (
                 id, user_id, name, email, phone, account_number, 
-                bank_name, relationship
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                bank_name, relationship, artist_name, paypal_email, links
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 beneficiaryId, req.user.id, name, email, phone,
-                account_number, bank_name, relationship
+                account_number, bank_name, relationship, 
+                artist_name || null, paypal_email || null, 
+                links ? JSON.stringify(links) : null
             ]
         );
 
         // Get the added beneficiary
         const newBeneficiary = await database.get(
             `SELECT id, name, email, phone, account_number, bank_name, 
-                    relationship, is_active, created_at, updated_at 
+                    relationship, artist_name, paypal_email, links,
+                    is_active, created_at, updated_at 
              FROM beneficiaries WHERE id = ?`,
             [beneficiaryId]
         );
 
+        // Parse links JSON
+        const processedBeneficiary = {
+            ...newBeneficiary,
+            links: newBeneficiary.links ? JSON.parse(newBeneficiary.links) : []
+        };
+
         res.status(201).json({
             success: true,
             message: 'Beneficiary added successfully',
-            beneficiary: newBeneficiary
+            beneficiary: processedBeneficiary
         });
 
     } catch (error) {
         console.error('Add beneficiary error:', error);
+        console.error('Request body:', req.body);
         res.status(500).json({
             success: false,
-            error: 'Failed to add beneficiary'
+            error: 'Failed to add beneficiary',
+            details: error.message
         });
     }
 });
@@ -140,15 +185,41 @@ router.post('/', verifyToken, [
 // Update beneficiary
 router.put('/:beneficiaryId', verifyToken, [
     body('name').optional().trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
-    body('email').optional().isEmail().normalizeEmail().withMessage('Valid email required'),
+    body('email').optional().trim().custom((value) => {
+        if (value && value !== '') {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(value)) {
+                throw new Error('Valid email required');
+            }
+        }
+        return true;
+    }),
     body('phone').optional().trim(),
     body('account_number').optional().trim(),
     body('bank_name').optional().trim(),
-    body('relationship').optional().trim()
+    body('relationship').optional().trim(),
+    body('artist_name').optional().trim(),
+    body('paypal_email').optional().trim().custom((value) => {
+        if (value && value !== '') {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(value)) {
+                throw new Error('Valid PayPal email required');
+            }
+        }
+        return true;
+    }),
+    body('links').optional().custom((value) => {
+        if (value && !Array.isArray(value)) {
+            throw new Error('Links must be an array');
+        }
+        return true;
+    })
 ], async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
+            console.error('PUT Validation errors:', errors.array());
+            console.error('PUT Request body:', req.body);
             return res.status(400).json({
                 success: false,
                 error: 'Validation failed',
@@ -157,7 +228,7 @@ router.put('/:beneficiaryId', verifyToken, [
         }
 
         const { beneficiaryId } = req.params;
-        const { name, email, phone, account_number, bank_name, relationship } = req.body;
+        const { name, email, phone, account_number, bank_name, relationship, artist_name, paypal_email, links } = req.body;
 
         // Check if beneficiary exists and belongs to user
         const beneficiary = await database.get(
@@ -214,6 +285,18 @@ router.put('/:beneficiaryId', verifyToken, [
             updateFields.push('relationship = ?');
             updateValues.push(relationship);
         }
+        if (artist_name !== undefined) {
+            updateFields.push('artist_name = ?');
+            updateValues.push(artist_name);
+        }
+        if (paypal_email !== undefined) {
+            updateFields.push('paypal_email = ?');
+            updateValues.push(paypal_email);
+        }
+        if (links !== undefined) {
+            updateFields.push('links = ?');
+            updateValues.push(links ? JSON.stringify(links) : null);
+        }
 
         if (updateFields.length === 0) {
             return res.status(400).json({
@@ -233,15 +316,22 @@ router.put('/:beneficiaryId', verifyToken, [
         // Get updated beneficiary
         const updatedBeneficiary = await database.get(
             `SELECT id, name, email, phone, account_number, bank_name, 
-                    relationship, is_active, created_at, updated_at 
+                    relationship, artist_name, paypal_email, links,
+                    is_active, created_at, updated_at 
              FROM beneficiaries WHERE id = ?`,
             [beneficiaryId]
         );
 
+        // Parse links JSON
+        const processedBeneficiary = {
+            ...updatedBeneficiary,
+            links: updatedBeneficiary.links ? JSON.parse(updatedBeneficiary.links) : []
+        };
+
         res.json({
             success: true,
             message: 'Beneficiary updated successfully',
-            beneficiary: updatedBeneficiary
+            beneficiary: processedBeneficiary
         });
 
     } catch (error) {

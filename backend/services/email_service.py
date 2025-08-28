@@ -211,7 +211,7 @@ class EmailService:
         return self.send_notification_email(to_email, user_name, subject, message_body)
 
     def send_beat_email(self, to_email, user_name, subject, message_body, attachment_data=None, reply_to=None):
-        """Send email with beat attachment from Beat Library"""
+        """Send email with beat attachment(s) from Beat Library"""
         try:
             # Create message
             message = MIMEMultipart()
@@ -238,32 +238,60 @@ class EmailService:
 
             message.attach(MIMEText(body, "plain"))
 
-            # Add attachment if provided
+            # Handle multiple attachments
             if attachment_data:
-                try:
-                    # attachment_data should be a dict with: filename, content (base64), content_type
-                    filename = attachment_data.get('filename', 'beat_attachment')
-                    content = attachment_data.get('content', '')
-                    content_type = attachment_data.get('content_type', 'application/octet-stream')
-                    
-                    # Decode base64 content
-                    import base64
-                    file_content = base64.b64decode(content)
-                    
-                    part = MIMEBase('application', 'octet-stream')
-                    part.set_payload(file_content)
+                # Check if it's a list of attachments or a single attachment
+                if isinstance(attachment_data, list):
+                    # Multiple attachments
+                    for attachment in attachment_data:
+                        try:
+                            filename = attachment.get('filename', 'beat_attachment')
+                            content = attachment.get('content', '')
+                            content_type = attachment.get('content_type', 'application/octet-stream')
+                            
+                            # Decode base64 content
+                            import base64
+                            file_content = base64.b64decode(content)
+                            
+                            part = MIMEBase('application', 'octet-stream')
+                            part.set_payload(file_content)
 
-                    encoders.encode_base64(part)
-                    part.add_header(
-                        'Content-Disposition',
-                        f'attachment; filename= {filename}'
-                    )
-                    
-                    message.attach(part)
-                    logger.info(f"Attached file: {filename}")
-                    
-                except Exception as e:
-                    logger.error(f"Failed to attach file: {e}")
+                            encoders.encode_base64(part)
+                            part.add_header(
+                                'Content-Disposition',
+                                f'attachment; filename= {filename}'
+                            )
+                            
+                            message.attach(part)
+                            logger.info(f"Attached file: {filename}")
+                            
+                        except Exception as e:
+                            logger.error(f"Failed to attach file {filename}: {e}")
+                else:
+                    # Single attachment (backward compatibility)
+                    try:
+                        filename = attachment_data.get('filename', 'beat_attachment')
+                        content = attachment_data.get('content', '')
+                        content_type = attachment_data.get('content_type', 'application/octet-stream')
+                        
+                        # Decode base64 content
+                        import base64
+                        file_content = base64.b64decode(content)
+                        
+                        part = MIMEBase('application', 'octet-stream')
+                        part.set_payload(file_content)
+
+                        encoders.encode_base64(part)
+                        part.add_header(
+                            'Content-Disposition',
+                            f'attachment; filename= {filename}'
+                        )
+                        
+                        message.attach(part)
+                        logger.info(f"Attached file: {filename}")
+                        
+                    except Exception as e:
+                        logger.error(f"Failed to attach file: {e}")
 
             # Send email
             context = ssl.create_default_context()

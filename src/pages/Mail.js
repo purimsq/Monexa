@@ -16,9 +16,26 @@ import {
   Send,
   FolderOpen,
   Video,
-  Music2
+  Music2,
+  Users
 } from 'lucide-react';
 import apiService from '../services/api';
+
+// We'll fetch actual clients from the database instead of using hardcoded data
+
+// Utility function to format file size
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+// Utility function to calculate total size of attachments
+const calculateTotalSize = (attachments) => {
+  return attachments.reduce((total, attachment) => total + attachment.size, 0);
+};
 
 
 const Container = styled.div`
@@ -631,6 +648,168 @@ const SmallButton = styled.button`
   }
 `;
 
+const ClientSelectorModal = styled(motion.div)`
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  z-index: 1001;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+`;
+
+const ClientSelectorHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f0f0f0;
+`;
+
+const ClientSelectorTitle = styled.h2`
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+`;
+
+const ClientList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const ClientItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 2px solid #f0f0f0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #1a1a1a;
+    background: #f8f9fa;
+  }
+`;
+
+const ClientAvatar = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #1a1a1a;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+`;
+
+const ClientInfo = styled.div`
+  flex: 1;
+`;
+
+const ClientName = styled.div`
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+`;
+
+const ClientEmail = styled.div`
+  font-size: 14px;
+  color: #666666;
+`;
+
+const AttachmentList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+`;
+
+const AttachmentItem = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+`;
+
+const AttachmentItemInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+`;
+
+const AttachmentItemIcon = styled.div`
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: #1a1a1a;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+`;
+
+const AttachmentDetails = styled.div`
+  flex: 1;
+`;
+
+const AttachmentItemName = styled.div`
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1a;
+`;
+
+const AttachmentSize = styled.div`
+  font-size: 12px;
+  color: #666666;
+`;
+
+const TotalSize = styled.div`
+  font-size: 12px;
+  color: #666666;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e9ecef;
+`;
+
+const ClientButton = styled.button`
+  background: #1a1a1a;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    background: #333333;
+  }
+`;
+
+
+
 const emailTemplates = {
   payment: {
     subject: 'Payment Request - Beat Production',
@@ -685,21 +864,44 @@ const Mail = () => {
     recipient: '',
     subject: '',
     body: '',
-    attachment: null
+    attachments: []
   });
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [showClientSelector, setShowClientSelector] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [showBeatLibraryModal, setShowBeatLibraryModal] = useState(false);
   const [beatLibraryDocuments, setBeatLibraryDocuments] = useState([]);
   const [selectedBeatFromLibrary, setSelectedBeatFromLibrary] = useState(null);
+  const [beneficiaries, setBeneficiaries] = useState([]);
 
-  // Load email history on component mount
+
+  // Load email history and beneficiaries on component mount
   useEffect(() => {
     loadEmailHistory();
+    loadBeneficiaries();
   }, []);
+
+  const loadBeneficiaries = async () => {
+    try {
+      const response = await apiService.getBeneficiaries();
+      if (response.success) {
+        setBeneficiaries(response.beneficiaries || []);
+      } else {
+        console.error('Failed to load beneficiaries:', response.error);
+      }
+    } catch (error) {
+      console.error('Error loading beneficiaries:', error);
+    }
+  };
 
   const loadBeatLibraryDocuments = async () => {
     try {
+      // Check if we already have documents loaded
+      if (beatLibraryDocuments.length > 0) {
+        return; // Use cached data
+      }
+      
       const response = await apiService.getDocuments();
       if (response.success) {
         setBeatLibraryDocuments(response.documents || []);
@@ -727,6 +929,20 @@ const Mail = () => {
     }
   };
 
+  // Debounced search to reduce API calls
+  const debouncedSearch = React.useCallback(
+    React.useMemo(() => {
+      let timeoutId;
+      return (query) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          setSearchQuery(query);
+        }, 300);
+      };
+    }, []),
+    []
+  );
+
   const filteredEmails = emails.filter(email => {
     const matchesSearch = email.recipient.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          email.subject.toLowerCase().includes(searchQuery.toLowerCase());
@@ -740,12 +956,14 @@ const Mail = () => {
       recipient: '',
       subject: emailTemplates[template].subject,
       body: emailTemplates[template].body,
-      attachment: null
+      attachments: []
     });
+    setSelectedClient(null);
+    setSelectedBeatFromLibrary(null);
     setShowComposeModal(true);
   };
 
-  const handleSendEmail = async () => {
+    const handleSendEmail = async () => {
     if (!composeData.recipient || !composeData.subject || !composeData.body) {
       toast.error('Please fill in all required fields');
       return;
@@ -753,6 +971,11 @@ const Mail = () => {
 
     try {
       setSending(true);
+      
+      // Show progress for attachment processing
+      if (composeData.attachments.length > 0) {
+        toast.info(`Processing ${composeData.attachments.length} attachment(s)...`);
+      }
 
       // Prepare email data
       const emailData = {
@@ -762,20 +985,41 @@ const Mail = () => {
         template: selectedTemplate
       };
 
-      // Add attachment if present
-      if (composeData.attachment && selectedTemplate === 'beat') {
-        const reader = new FileReader();
-        const attachmentData = await new Promise((resolve, reject) => {
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(composeData.attachment);
+      // Add attachments if present
+      if (composeData.attachments.length > 0 && selectedTemplate === 'beat') {
+        // Process attachments in parallel for faster loading
+        const attachmentPromises = composeData.attachments.map(async (attachment) => {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              resolve({
+                name: attachment.name,
+                data: reader.result.split(',')[1], // Remove data URL prefix
+                type: attachment.type
+              });
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(attachment.file);
+          });
         });
 
-        emailData.attachment = {
-          name: composeData.attachment.name,
-          data: attachmentData.split(',')[1], // Remove data URL prefix
-          type: composeData.attachment.type
-        };
+        const attachments = await Promise.all(attachmentPromises);
+        
+        // Check total size
+        const totalSize = attachments.reduce((total, attachment) => {
+          return total + (attachment.data ? attachment.data.length * 0.75 : 0);
+        }, 0);
+        
+        const maxSize = 25 * 1024 * 1024; // 25MB
+        
+        if (totalSize > maxSize) {
+          // Files are too large, show error and don't send
+          toast.error('Total attachment size exceeds 25MB. Please reduce file sizes or send fewer files.');
+          setSending(false);
+          return;
+        }
+        
+        emailData.attachments = attachments;
       }
 
       const response = await apiService.sendEmail(emailData);
@@ -783,7 +1027,7 @@ const Mail = () => {
       if (response.success) {
         toast.success('Email sent successfully!');
         setShowComposeModal(false);
-        setComposeData({ recipient: '', subject: '', body: '', attachment: null });
+        setComposeData({ recipient: '', subject: '', body: '', attachments: [] });
         
         // Reload email history to show the new email
         await loadEmailHistory();
@@ -797,6 +1041,8 @@ const Mail = () => {
       setSending(false);
     }
   };
+
+
 
   const handleDeleteEmail = async (emailId) => {
     try {
@@ -817,8 +1063,30 @@ const Mail = () => {
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-      setComposeData(prev => ({ ...prev, attachment: file }));
-      setSelectedBeatFromLibrary(null); // Clear Beat Library selection
+      const maxSize = 25 * 1024 * 1024; // 25MB in bytes
+      const currentTotalSize = calculateTotalSize(composeData.attachments);
+      
+      if (currentTotalSize + file.size > maxSize) {
+        toast.error('Total attachment size cannot exceed 25MB');
+        return;
+      }
+
+      if (file.type.startsWith('audio/') || file.type.startsWith('video/')) {
+        const newAttachment = {
+          file,
+          name: file.name,
+          size: file.size,
+          type: file.type
+        };
+
+        setComposeData(prev => ({ 
+          ...prev, 
+          attachments: [...prev.attachments, newAttachment] 
+        }));
+        setSelectedBeatFromLibrary(null); // Clear Beat Library selection
+      } else {
+        toast.warning('Only audio and video files are allowed');
+      }
     }
   };
 
@@ -835,7 +1103,25 @@ const Mail = () => {
         type: document.file_type || 'application/octet-stream'
       });
       
-      setComposeData(prev => ({ ...prev, attachment: file }));
+      const maxSize = 25 * 1024 * 1024; // 25MB in bytes
+      const currentTotalSize = calculateTotalSize(composeData.attachments);
+      
+      if (currentTotalSize + file.size > maxSize) {
+        toast.error('Total attachment size cannot exceed 25MB');
+        return;
+      }
+
+      const newAttachment = {
+        file,
+        name: document.file_name || document.filename,
+        size: file.size,
+        type: document.file_type || 'application/octet-stream'
+      };
+      
+      setComposeData(prev => ({ 
+        ...prev, 
+        attachments: [...prev.attachments, newAttachment] 
+      }));
       setSelectedBeatFromLibrary(document);
       setShowBeatLibraryModal(false);
       toast.success(`Selected: ${document.title || document.file_name}`);
@@ -845,17 +1131,68 @@ const Mail = () => {
     }
   };
 
-  const handleClearAttachment = () => {
-    setComposeData(prev => ({ ...prev, attachment: null }));
+  const handleSelectClient = (client) => {
+    setSelectedClient(client);
+    setComposeData(prev => ({ ...prev, recipient: client.email }));
+    setShowClientSelector(false);
+    toast.success(`Selected client: ${client.name}`);
+  };
+
+  const handleFileUpload = (event) => {
+    const files = Array.from(event.target.files);
+    const maxSize = 25 * 1024 * 1024; // 25MB in bytes
+    const currentTotalSize = calculateTotalSize(composeData.attachments);
+    
+    // Quick size check first
+    const newFilesSize = files.reduce((total, file) => total + file.size, 0);
+    if (currentTotalSize + newFilesSize > maxSize) {
+      toast.error('Total attachment size cannot exceed 25MB');
+      return;
+    }
+
+    // Filter for audio/video files only (optimized)
+    const validFiles = files.filter(file => {
+      const isValidType = file.type.startsWith('audio/') || file.type.startsWith('video/');
+      const isValidSize = file.size > 0 && file.size <= maxSize;
+      return isValidType && isValidSize;
+    });
+
+    if (validFiles.length !== files.length) {
+      toast.warning(`${files.length - validFiles.length} file(s) were skipped (invalid type or size)`);
+    }
+
+    if (validFiles.length > 0) {
+      const newAttachments = validFiles.map(file => ({
+        file,
+        name: file.name,
+        size: file.size,
+        type: file.type
+      }));
+
+      setComposeData(prev => ({
+        ...prev,
+        attachments: [...prev.attachments, ...newAttachments]
+      }));
+      
+      toast.success(`Added ${validFiles.length} file(s) successfully`);
+    }
+  };
+
+  const handleRemoveAttachment = (index) => {
+    setComposeData(prev => ({
+      ...prev,
+      attachments: prev.attachments.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleClearAttachments = () => {
+    setComposeData(prev => ({ ...prev, attachments: [] }));
     setSelectedBeatFromLibrary(null);
   };
 
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  const handleClearClient = () => {
+    setSelectedClient(null);
+    setComposeData(prev => ({ ...prev, recipient: '' }));
   };
 
   return (
@@ -873,12 +1210,12 @@ const Mail = () => {
       <Controls>
         <SearchContainer>
           <Search size={16} />
-          <SearchInput
-            type="text"
-            placeholder="Search by email address or subject..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+                     <SearchInput
+             type="text"
+             placeholder="Search by email address or subject..."
+             defaultValue={searchQuery}
+             onChange={(e) => debouncedSearch(e.target.value)}
+           />
         </SearchContainer>
 
         <DateFilterContainer>
@@ -960,15 +1297,16 @@ const Mail = () => {
               <Label>Template Type</Label>
               <Select
                 value={selectedTemplate}
-                onChange={(e) => {
-                  setSelectedTemplate(e.target.value);
-                  setComposeData({
-                    recipient: composeData.recipient,
-                    subject: emailTemplates[e.target.value].subject,
-                    body: emailTemplates[e.target.value].body,
-                    attachment: composeData.attachment
-                  });
-                }}
+                                 onChange={(e) => {
+                   setSelectedTemplate(e.target.value);
+                   setComposeData({
+                     recipient: composeData.recipient,
+                     subject: emailTemplates[e.target.value].subject,
+                     body: emailTemplates[e.target.value].body,
+                     attachments: []
+                   });
+                   setSelectedBeatFromLibrary(null);
+                 }}
               >
                 <option value="payment">Payment Request</option>
                 <option value="beat">Beat Attachment</option>
@@ -978,12 +1316,42 @@ const Mail = () => {
 
             <FormGroup>
               <Label>Recipient Email *</Label>
-              <Input
-                type="email"
-                placeholder="Enter recipient email address"
-                value={composeData.recipient}
-                onChange={(e) => setComposeData(prev => ({ ...prev, recipient: e.target.value }))}
-              />
+              <div style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
+                <Input
+                  type="email"
+                  placeholder="Enter recipient email address"
+                  value={composeData.recipient}
+                  onChange={(e) => setComposeData(prev => ({ ...prev, recipient: e.target.value }))}
+                  style={{ flex: 1 }}
+                />
+                <ClientButton 
+                  type="button" 
+                  onClick={() => setShowClientSelector(true)}
+                >
+                  Choose Client
+                </ClientButton>
+              </div>
+                             {selectedClient && (
+                 <div style={{ 
+                   display: 'flex',
+                   alignItems: 'center',
+                   justifyContent: 'space-between',
+                   padding: '8px 12px', 
+                   background: '#f8f9fa', 
+                   border: '1px solid #e9ecef', 
+                   borderRadius: '8px',
+                   fontSize: '14px',
+                   color: '#666666'
+                 }}>
+                   <span>Selected: {selectedClient.name} ({selectedClient.email})</span>
+                   <SmallButton 
+                     className="danger" 
+                     onClick={handleClearClient}
+                   >
+                     Remove
+                   </SmallButton>
+                 </div>
+               )}
             </FormGroup>
 
             <FormGroup>
@@ -998,15 +1366,16 @@ const Mail = () => {
 
             {selectedTemplate === 'beat' && (
               <FormGroup>
-                <Label>Attach Beat File</Label>
+                <Label>Attach Beat Files (Max 25MB total)</Label>
                 <div style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
                   <FileUploadButton style={{ flex: 1 }}>
                     <Paperclip size={16} />
-                    Upload New File
+                    Upload New Files
                     <FileInput
                       type="file"
+                      multiple
                       accept=".mp3,.mp4,.wav,.ogg,.flac,.aac,.m4a,.mov,.avi,.webm"
-                      onChange={handleFileChange}
+                      onChange={handleFileUpload}
                     />
                   </FileUploadButton>
                   <Button 
@@ -1020,41 +1389,43 @@ const Mail = () => {
                   </Button>
                 </div>
                 
-                {/* Attachment Preview */}
-                {(composeData.attachment || selectedBeatFromLibrary) && (
-                  <AttachmentPreview>
-                    <AttachmentIcon>
-                      {selectedBeatFromLibrary ? (
-                        selectedBeatFromLibrary.file_type?.startsWith('video/') || 
-                        selectedBeatFromLibrary.file_name?.toLowerCase().includes('.mp4') ? (
-                          <Video size={16} />
-                        ) : (
-                          <Music2 size={16} />
-                        )
-                      ) : (
-                        <Paperclip size={16} />
-                      )}
-                    </AttachmentIcon>
-                    <AttachmentInfo>
-                      <AttachmentName>
-                        {selectedBeatFromLibrary 
-                          ? (selectedBeatFromLibrary.title || selectedBeatFromLibrary.file_name)
-                          : composeData.attachment?.name
-                        }
-                      </AttachmentName>
-                      <AttachmentSource>
-                        {selectedBeatFromLibrary ? 'From Beat Library' : 'Uploaded File'}
-                      </AttachmentSource>
-                    </AttachmentInfo>
-                    <AttachmentActions>
-                      <SmallButton 
-                        className="danger" 
-                        onClick={handleClearAttachment}
-                      >
-                        Remove
-                      </SmallButton>
-                    </AttachmentActions>
-                  </AttachmentPreview>
+                {/* Multiple Attachments Preview */}
+                {composeData.attachments.length > 0 && (
+                  <AttachmentList>
+                    {composeData.attachments.map((attachment, index) => (
+                      <AttachmentItem key={index}>
+                        <AttachmentItemInfo>
+                          <AttachmentItemIcon>
+                            {attachment.type.startsWith('video/') ? (
+                              <Video size={16} />
+                            ) : (
+                              <Music2 size={16} />
+                            )}
+                          </AttachmentItemIcon>
+                          <AttachmentDetails>
+                            <AttachmentItemName>{attachment.name}</AttachmentItemName>
+                            <AttachmentSize>{formatFileSize(attachment.size)}</AttachmentSize>
+                          </AttachmentDetails>
+                        </AttachmentItemInfo>
+                        <SmallButton 
+                          className="danger" 
+                          onClick={() => handleRemoveAttachment(index)}
+                        >
+                          Remove
+                        </SmallButton>
+                      </AttachmentItem>
+                    ))}
+                    <TotalSize>
+                      Total Size: {formatFileSize(calculateTotalSize(composeData.attachments))}
+                    </TotalSize>
+                    <SmallButton 
+                      className="secondary" 
+                      onClick={handleClearAttachments}
+                      style={{ alignSelf: 'flex-start', marginTop: '8px' }}
+                    >
+                      Clear All
+                    </SmallButton>
+                  </AttachmentList>
                 )}
               </FormGroup>
             )}
@@ -1078,6 +1449,80 @@ const Mail = () => {
               </Button>
             </ModalActions>
           </Modal>
+        </ModalOverlay>
+      )}
+
+      {/* Client Selector Modal */}
+      {showClientSelector && (
+        <ModalOverlay
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setShowClientSelector(false)}
+        >
+          <ClientSelectorModal
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ClientSelectorHeader>
+              <ClientSelectorTitle>Choose Client</ClientSelectorTitle>
+              <CloseButton onClick={() => setShowClientSelector(false)}>
+                <X size={20} />
+              </CloseButton>
+            </ClientSelectorHeader>
+
+            <ClientList>
+              {beneficiaries.length === 0 ? (
+                <div style={{ 
+                  textAlign: 'center', 
+                  padding: '40px', 
+                  color: '#666666' 
+                }}>
+                  <Users size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
+                  <p>No clients found</p>
+                  <p style={{ fontSize: '14px', marginTop: '8px' }}>
+                    You need to create clients first in the Clients page
+                  </p>
+                  <button
+                    onClick={() => {
+                      setShowClientSelector(false);
+                      // Navigate to clients page
+                      window.location.href = '/beneficiaries';
+                    }}
+                    style={{
+                      marginTop: '16px',
+                      padding: '8px 16px',
+                      backgroundColor: '#1a1a1a',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '14px'
+                    }}
+                  >
+                    Go to Clients Page
+                  </button>
+                </div>
+              ) : (
+                beneficiaries.map((client) => (
+                  <ClientItem
+                    key={client.id}
+                    onClick={() => handleSelectClient(client)}
+                  >
+                    <ClientAvatar>
+                      {client.name ? client.name.charAt(0).toUpperCase() : '?'}
+                    </ClientAvatar>
+                    <ClientInfo>
+                      <ClientName>{client.name}</ClientName>
+                      <ClientEmail>{client.email}</ClientEmail>
+                    </ClientInfo>
+                  </ClientItem>
+                ))
+              )}
+            </ClientList>
+          </ClientSelectorModal>
         </ModalOverlay>
       )}
 
@@ -1155,11 +1600,13 @@ const Mail = () => {
               </BeatLibraryGrid>
             )}
           </BeatLibraryModal>
-        </BeatLibraryModalOverlay>
-      )}
-    </Container>
-  );
-};
+                 </BeatLibraryModalOverlay>
+       )}
+
+       
+     </Container>
+   );
+ };
 
 export default Mail;
 

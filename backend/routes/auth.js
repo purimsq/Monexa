@@ -469,4 +469,57 @@ router.get('/verify-reset-token/:token', async (req, res) => {
     }
 });
 
+// Verify password for sensitive operations
+router.post('/verify-password', verifyToken, [
+    body('password').notEmpty().withMessage('Password is required')
+], async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({
+                success: false,
+                error: 'Validation failed',
+                details: errors.array()
+            });
+        }
+
+        const { password } = req.body;
+        const userId = req.user.id;
+
+        // Get user's hashed password
+        const user = await database.get(
+            'SELECT password FROM users WHERE id = ?',
+            [userId]
+        );
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        // Verify password
+        const isValidPassword = await bcrypt.compare(password, user.password);
+
+        if (!isValidPassword) {
+            return res.status(401).json({
+                success: false,
+                error: 'Incorrect password'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Password verified successfully'
+        });
+    } catch (error) {
+        console.error('Password verification error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Password verification failed'
+        });
+    }
+});
+
 module.exports = router;

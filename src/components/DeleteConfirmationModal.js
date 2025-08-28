@@ -1,123 +1,122 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Trash2, X } from 'lucide-react';
+import { X, AlertTriangle, Trash2 } from 'lucide-react';
+import { toast } from 'react-toastify';
 
-const Overlay = styled(motion.div)`
+const ModalOverlay = styled(motion.div)`
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  backdrop-filter: blur(4px);
+  padding: 20px;
 `;
 
-const Modal = styled(motion.div)`
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 32px;
-  max-width: 480px;
-  width: 90%;
-  border: 2px solid #f0f0f0;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+const ModalContent = styled(motion.div)`
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 400px;
+  position: relative;
 `;
 
-const Header = styled.div`
+const ModalHeader = styled.div`
+  padding: 24px 24px 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+`;
+
+const ModalTitle = styled.h2`
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
-`;
-
-const IconContainer = styled.div`
-  width: 48px;
-  height: 48px;
-  background: #fef2f2;
-  border: 2px solid #fecaca;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #dc2626;
-`;
-
-const Title = styled.h2`
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #000000;
-  margin: 0;
+  gap: 8px;
 `;
 
 const CloseButton = styled.button`
-  margin-left: auto;
-  width: 32px;
-  height: 32px;
+  background: none;
   border: none;
-  background: #f5f5f5;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
-  color: #666666;
-  
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.2s;
+
   &:hover {
-    background: #e5e5e5;
-    color: #000000;
+    background: #f3f4f6;
   }
 `;
 
-const Content = styled.div`
-  margin-bottom: 32px;
+const ModalBody = styled.div`
+  padding: 0 24px 24px 24px;
+`;
+
+const WarningIcon = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+  
+  svg {
+    color: #ef4444;
+    width: 48px;
+    height: 48px;
+  }
 `;
 
 const Message = styled.p`
-  color: #666666;
-  font-size: 1rem;
+  color: #374151;
+  text-align: center;
+  margin-bottom: 24px;
   line-height: 1.6;
-  margin-bottom: 16px;
 `;
 
-const BeatInfo = styled.div`
-  background: #fafafa;
-  border: 1px solid #e5e5e5;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-`;
-
-const BeatName = styled.div`
+const ItemName = styled.span`
   font-weight: 600;
-  color: #000000;
-  font-size: 1rem;
-  margin-bottom: 4px;
+  color: #1f2937;
 `;
 
-const BeatDetails = styled.div`
-  color: #666666;
-  font-size: 0.875rem;
+const FormGroup = styled.div`
+  margin-bottom: 20px;
 `;
 
-const Warning = styled.div`
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #dc2626;
-  font-size: 0.875rem;
+const Label = styled.label`
+  display: block;
+  margin-bottom: 8px;
   font-weight: 500;
+  color: #374151;
+  font-size: 14px;
 `;
 
-const Actions = styled.div`
+const Input = styled.input`
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  }
+
+  &::placeholder {
+    color: #9ca3af;
+  }
+`;
+
+const ModalActions = styled.div`
   display: flex;
   gap: 12px;
   justify-content: flex-end;
@@ -125,39 +124,32 @@ const Actions = styled.div`
 
 const Button = styled.button`
   padding: 12px 24px;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 1rem;
+  border-radius: 8px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
-  border: 2px solid;
-  
-  &.cancel {
-    background: #ffffff;
-    border-color: #e5e5e5;
-    color: #666666;
-    
+  transition: all 0.2s;
+  border: none;
+
+  &.primary {
+    background: #ef4444;
+    color: white;
+
     &:hover {
-      background: #f5f5f5;
-      border-color: #000000;
-      color: #000000;
+      background: #dc2626;
+    }
+
+    &:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
     }
   }
-  
-  &.delete {
-    background: #dc2626;
-    border-color: #dc2626;
-    color: #ffffff;
-    
+
+  &.secondary {
+    background: #f3f4f6;
+    color: #374151;
+
     &:hover {
-      background: #b91c1c;
-      border-color: #b91c1c;
-    }
-    
-    &:disabled {
-      background: #cccccc;
-      border-color: #cccccc;
-      cursor: not-allowed;
+      background: #e5e7eb;
     }
   }
 `;
@@ -166,88 +158,94 @@ const DeleteConfirmationModal = ({
   isOpen, 
   onClose, 
   onConfirm, 
-  beat, 
-  isDeleting = false 
+  itemName, 
+  itemType = 'item',
+  loading = false 
 }) => {
-  if (!isOpen) return null;
+  const [confirmationText, setConfirmationText] = useState('');
 
   const handleConfirm = () => {
-    onConfirm(beat);
+    if (confirmationText.toLowerCase() === 'delete') {
+      onConfirm();
+    } else {
+      toast.error('Please type "delete" to confirm');
+    }
+  };
+
+  const handleClose = () => {
+    setConfirmationText('');
+    onClose();
   };
 
   return (
     <AnimatePresence>
-      <Overlay
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-      >
-        <Modal
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          onClick={(e) => e.stopPropagation()}
+      {isOpen && (
+        <ModalOverlay
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={handleClose}
         >
-          <Header>
-            <IconContainer>
-              <AlertTriangle size={24} />
-            </IconContainer>
-            <Title>Delete Beat</Title>
-            <CloseButton onClick={onClose}>
-              <X size={16} />
-            </CloseButton>
-          </Header>
-          
-          <Content>
-            <Message>
-              Are you sure you want to delete this beat? This action cannot be undone.
-            </Message>
-            
-            {beat && (
-              <BeatInfo>
-                <BeatName>{beat.title || beat.file_name || beat.filename}</BeatName>
-                <BeatDetails>
-                  {beat.file_type?.startsWith('video/') ? 'Video File' : 'Audio File'} • 
-                  {beat.file_size ? ` ${(beat.file_size / (1024 * 1024)).toFixed(1)} MB` : ''}
-                </BeatDetails>
-              </BeatInfo>
-            )}
-            
-            <Warning>
-              <AlertTriangle size={16} />
-              This will permanently remove the file from your library
-            </Warning>
-          </Content>
-          
-          <Actions>
-            <Button 
-              className="cancel" 
-              onClick={onClose}
-              disabled={isDeleting}
-            >
-              Cancel
-            </Button>
-            <Button 
-              className="delete" 
-              onClick={handleConfirm}
-              disabled={isDeleting}
-            >
-              {isDeleting ? (
-                <>
-                  <Trash2 size={16} />
-                  Deleting...
-                </>
-              ) : (
-                <>
-                  <Trash2 size={16} />
-                  Delete Beat
-                </>
-              )}
-            </Button>
-          </Actions>
-        </Modal>
-      </Overlay>
+          <ModalContent
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            onClick={e => e.stopPropagation()}
+          >
+            <ModalHeader>
+              <ModalTitle>
+                <Trash2 size={20} />
+                Delete {itemType}
+              </ModalTitle>
+              <CloseButton onClick={handleClose}>
+                <X size={20} />
+              </CloseButton>
+            </ModalHeader>
+
+            <ModalBody>
+              <WarningIcon>
+                <AlertTriangle />
+              </WarningIcon>
+
+              <Message>
+                Are you sure you want to delete <ItemName>{itemName}</ItemName>? 
+                This action cannot be undone.
+              </Message>
+
+              <FormGroup>
+                <Label>
+                  Type "delete" to confirm
+                </Label>
+                <Input
+                  type="text"
+                  value={confirmationText}
+                  onChange={(e) => setConfirmationText(e.target.value)}
+                  placeholder="delete"
+                />
+              </FormGroup>
+
+              <ModalActions>
+                <Button 
+                  type="button" 
+                  className="secondary"
+                  onClick={handleClose}
+                  disabled={loading}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="button" 
+                  className="primary"
+                  onClick={handleConfirm}
+                  disabled={loading || confirmationText.toLowerCase() !== 'delete'}
+                >
+                  {loading ? 'Deleting...' : 'Delete'}
+                </Button>
+              </ModalActions>
+            </ModalBody>
+          </ModalContent>
+        </ModalOverlay>
+      )}
     </AnimatePresence>
   );
 };

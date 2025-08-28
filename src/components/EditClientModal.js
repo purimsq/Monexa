@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Users, Mail, Music, CreditCard, Link, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiService from '../services/api';
-import { useAuth } from '../contexts/AuthContext';
 
 const ModalOverlay = styled(motion.div)`
   position: fixed;
@@ -17,7 +16,7 @@ const ModalOverlay = styled(motion.div)`
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 1002;
   padding: 20px;
 `;
 
@@ -25,7 +24,7 @@ const ModalContent = styled(motion.div)`
   background: white;
   border-radius: 16px;
   width: 100%;
-  max-width: 500px;
+  max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
@@ -36,7 +35,6 @@ const ModalHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #e5e7eb;
   margin-bottom: 24px;
 `;
 
@@ -67,12 +65,14 @@ const ModalBody = styled.div`
 `;
 
 const Form = styled.form`
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 24px;
 `;
 
 const FormSection = styled.div`
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 `;
 
@@ -80,32 +80,33 @@ const SectionTitle = styled.h3`
   font-size: 1.1rem;
   font-weight: 600;
   color: #1f2937;
-  margin: 0;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e5e7eb;
   display: flex;
   align-items: center;
   gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
 `;
 
 const FormGroup = styled.div`
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
 `;
 
 const Label = styled.label`
   font-weight: 500;
   color: #374151;
+  font-size: 14px;
   display: flex;
   align-items: center;
   gap: 6px;
 `;
 
 const Input = styled.input`
-  padding: 12px;
+  padding: 12px 16px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 14px;
   transition: all 0.2s;
 
   &:focus {
@@ -119,91 +120,83 @@ const Input = styled.input`
   }
 `;
 
-const PayPalButton = styled.button`
-  padding: 12px 16px;
-  border: 2px dashed #d1d5db;
-  border-radius: 8px;
-  background: #f9fafb;
-  color: #6b7280;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s;
+const LinksSection = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 16px;
+`;
 
-  &:hover {
-    border-color: #3b82f6;
-    background: #eff6ff;
-    color: #3b82f6;
-  }
+const LinksHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 `;
 
 const AddLinkButton = styled.button`
-  padding: 12px 16px;
-  border: 2px dashed #d1d5db;
-  border-radius: 8px;
-  background: #f9fafb;
-  color: #6b7280;
-  font-size: 0.9rem;
+  background: #1a1a1a;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  gap: 6px;
+  transition: all 0.2s;
 
   &:hover {
-    border-color: #3b82f6;
-    background: #eff6ff;
-    color: #3b82f6;
+    background: #333333;
   }
 
   &:disabled {
-    opacity: 0.5;
+    background: #9ca3af;
     cursor: not-allowed;
   }
 `;
 
-const LinkFields = styled.div`
-  display: grid;
+const LinkItem = styled.div`
+  display: flex;
   gap: 12px;
+  align-items: flex-start;
   padding: 16px;
-  background: #f9fafb;
-  border-radius: 8px;
   border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
 `;
 
-const LinkItem = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: 12px;
-  align-items: end;
+const LinkInputs = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 `;
 
 const RemoveLinkButton = styled.button`
-  padding: 8px;
+  background: #ef4444;
+  color: white;
   border: none;
-  background: #fee2e2;
-  color: #dc2626;
+  padding: 8px;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s;
 
   &:hover {
-    background: #fecaca;
+    background: #dc2626;
   }
 `;
 
-const FormActions = styled.div`
+const ModalActions = styled.div`
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  margin-top: 8px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
 `;
 
 const Button = styled.button`
@@ -213,6 +206,9 @@ const Button = styled.button`
   cursor: pointer;
   transition: all 0.2s;
   border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 
   &.primary {
     background: #1a1a1a;
@@ -238,22 +234,33 @@ const Button = styled.button`
   }
 `;
 
-const AddBeneficiaryModal = ({ isOpen, onClose, onBeneficiaryAdded }) => {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [showLinks, setShowLinks] = useState(false);
+const EditClientModal = ({ 
+  isOpen, 
+  onClose, 
+  client, 
+  onClientUpdated 
+}) => {
   const [formData, setFormData] = useState({
-    // Basic Information
     name: '',
     artist_name: '',
     email: '',
-    
-    // Payment Information
     paypal_email: '',
-    
-    // Social Links
     links: []
   });
+  const [loading, setLoading] = useState(false);
+
+  // Initialize form data when client changes
+  useEffect(() => {
+    if (client) {
+      setFormData({
+        name: client.name || '',
+        artist_name: client.artist_name || '',
+        email: client.email || '',
+        paypal_email: client.paypal_email || '',
+        links: client.links ? [...client.links] : []
+      });
+    }
+  }, [client]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -262,21 +269,11 @@ const AddBeneficiaryModal = ({ isOpen, onClose, onBeneficiaryAdded }) => {
     }));
   };
 
-  const handlePayPalSetup = () => {
-    // This would open a PayPal setup modal or form
-    toast.info('PayPal setup feature coming soon!');
-  };
-
-  const toggleLinks = () => {
-    setShowLinks(!showLinks);
-  };
-
   const addLink = () => {
     if (formData.links.length >= 2) {
       toast.warning('Maximum 2 links allowed');
       return;
     }
-    
     setFormData(prev => ({
       ...prev,
       links: [...prev.links, { name: '', url: '' }]
@@ -293,7 +290,7 @@ const AddBeneficiaryModal = ({ isOpen, onClose, onBeneficiaryAdded }) => {
   const updateLink = (index, field, value) => {
     setFormData(prev => ({
       ...prev,
-      links: prev.links.map((link, i) => 
+      links: prev.links.map((link, i) =>
         i === index ? { ...link, [field]: value } : link
       )
     }));
@@ -301,36 +298,28 @@ const AddBeneficiaryModal = ({ isOpen, onClose, onBeneficiaryAdded }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Check if user is authenticated
-    if (!user) {
-      // Temporary login bypass for testing
-      try {
-        const loginResponse = await apiService.login('demo@monexa.com', 'password123');
-        if (loginResponse.success) {
-          toast.success('Auto-logged in for testing!');
-          // Refresh the page to update auth state
-          window.location.reload();
-          return;
-        }
-      } catch (error) {
-        console.error('Auto-login failed:', error);
-      }
-      
-      toast.error('You must be logged in to add a client');
-      return;
-    }
-    
-    // Basic validation
-    if (!formData.name || !formData.email) {
-      toast.error('Please fill in all required fields');
+
+    // Validation
+    if (!formData.name.trim()) {
+      toast.error('Name is required');
       return;
     }
 
-    // Email validation
+    if (!formData.email.trim()) {
+      toast.error('Email is required');
+      return;
+    }
+
+    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       toast.error('Please enter a valid email address');
+      return;
+    }
+
+    // Validate PayPal email if provided
+    if (formData.paypal_email && !emailRegex.test(formData.paypal_email)) {
+      toast.error('Please enter a valid PayPal email address');
       return;
     }
 
@@ -344,47 +333,37 @@ const AddBeneficiaryModal = ({ isOpen, onClose, onBeneficiaryAdded }) => {
     try {
       setLoading(true);
       
-      // Prepare data for API - organized structure
-      const clientData = {
-        // Basic Information
-        name: formData.name,
-        email: formData.email,
-        
-        // Optional fields - only include if they have values
-        ...(formData.artist_name && { artist_name: formData.artist_name }),
-        ...(formData.paypal_email && { paypal_email: formData.paypal_email }),
-        
-        // Social Links
+      const updateData = {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        ...(formData.artist_name.trim() && { artist_name: formData.artist_name.trim() }),
+        ...(formData.paypal_email.trim() && { paypal_email: formData.paypal_email.trim() }),
         ...(validLinks.length > 0 && { links: validLinks })
       };
       
-      console.log('Sending client data:', clientData);
-      console.log('User authenticated:', !!user);
-      console.log('Token available:', !!localStorage.getItem('monexa_token'));
-      const response = await apiService.createBeneficiary(clientData);
+      console.log('Sending update data:', updateData);
+      console.log('Client ID:', client.id);
+      
+      const response = await apiService.updateBeneficiary(client.id, updateData);
       
       if (response.success) {
-        toast.success('Client added successfully!');
-        setFormData({
-          name: '',
-          artist_name: '',
-          email: '',
-          paypal_email: '',
-          links: []
-        });
-        setShowLinks(false);
-        onBeneficiaryAdded && onBeneficiaryAdded();
+        toast.success('Client updated successfully!');
+        onClientUpdated && onClientUpdated(response.beneficiary);
         onClose();
+      } else {
+        toast.error(response.error || 'Failed to update client');
       }
     } catch (error) {
-      console.error('Failed to add client:', error);
+      console.error('Failed to update client:', error);
       console.error('Error response:', error.response?.data);
-      const errorMessage = error.response?.data?.error || error.message || 'Failed to add client. Please try again.';
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to update client. Please try again.';
       toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
+
+  if (!client) return null;
 
   return (
     <AnimatePresence>
@@ -404,7 +383,7 @@ const AddBeneficiaryModal = ({ isOpen, onClose, onBeneficiaryAdded }) => {
             <ModalHeader>
               <ModalTitle>
                 <Users size={24} />
-                Add New Client
+                Edit Client
               </ModalTitle>
               <CloseButton onClick={onClose}>
                 <X size={20} />
@@ -443,7 +422,7 @@ const AddBeneficiaryModal = ({ isOpen, onClose, onBeneficiaryAdded }) => {
                       type="text"
                       value={formData.artist_name}
                       onChange={(e) => handleInputChange('artist_name', e.target.value)}
-                      placeholder="Artist XYZ"
+                      placeholder="Artist Name"
                     />
                   </FormGroup>
 
@@ -470,82 +449,83 @@ const AddBeneficiaryModal = ({ isOpen, onClose, onBeneficiaryAdded }) => {
                   </SectionTitle>
                   
                   <FormGroup>
-                    <Label>PayPal Information (Optional)</Label>
-                    <PayPalButton
-                      type="button"
-                      onClick={handlePayPalSetup}
-                    >
+                    <Label>
                       <CreditCard size={16} />
-                      Set Up PayPal Info
-                    </PayPalButton>
+                      PayPal Email (Optional)
+                    </Label>
+                    <Input
+                      type="email"
+                      value={formData.paypal_email}
+                      onChange={(e) => handleInputChange('paypal_email', e.target.value)}
+                      placeholder="paypal@example.com"
+                    />
                   </FormGroup>
                 </FormSection>
 
                 {/* Social Links Section */}
                 <FormSection>
-                  <SectionTitle>
-                    <Link size={18} />
-                    Social Links (Optional)
-                  </SectionTitle>
-                  
-                  <AddLinkButton
-                    type="button"
-                    onClick={toggleLinks}
-                    disabled={formData.links.length >= 2}
-                  >
-                    <Plus size={16} />
-                    {showLinks ? 'Hide Links' : 'Add Links'}
-                  </AddLinkButton>
+                  <LinksSection>
+                    <LinksHeader>
+                      <SectionTitle>
+                        <Link size={18} />
+                        Social Links (Optional)
+                      </SectionTitle>
+                      <AddLinkButton
+                        type="button"
+                        onClick={addLink}
+                        disabled={formData.links.length >= 2}
+                      >
+                        <Plus size={14} />
+                        {formData.links.length >= 2 ? 'Max Reached' : 'Add Link'}
+                      </AddLinkButton>
+                    </LinksHeader>
 
-                  {showLinks && (
-                    <LinkFields>
-                      {formData.links.map((link, index) => (
-                        <LinkItem key={index}>
-                          <FormGroup>
-                            <Label>Link Name *</Label>
-                            <Input
-                              type="text"
-                              value={link.name}
-                              onChange={(e) => updateLink(index, 'name', e.target.value)}
-                              placeholder="YouTube, Instagram, etc."
-                            />
-                          </FormGroup>
-                          <FormGroup>
-                            <Label>URL *</Label>
-                            <Input
-                              type="url"
-                              value={link.url}
-                              onChange={(e) => updateLink(index, 'url', e.target.value)}
-                              placeholder="https://..."
-                            />
-                          </FormGroup>
-                          <RemoveLinkButton
-                            type="button"
-                            onClick={() => removeLink(index)}
-                          >
-                            <Trash2 size={14} />
-                          </RemoveLinkButton>
-                        </LinkItem>
-                      ))}
-                      
-                      {formData.links.length < 2 && (
-                        <AddLinkButton
+                    {formData.links.map((link, index) => (
+                      <LinkItem key={index}>
+                        <LinkInputs>
+                          <Input
+                            type="text"
+                            value={link.name}
+                            onChange={(e) => updateLink(index, 'name', e.target.value)}
+                            placeholder="Link Name (e.g., YouTube, Instagram)"
+                          />
+                          <Input
+                            type="url"
+                            value={link.url}
+                            onChange={(e) => updateLink(index, 'url', e.target.value)}
+                            placeholder="https://example.com"
+                          />
+                        </LinkInputs>
+                        <RemoveLinkButton
                           type="button"
-                          onClick={addLink}
+                          onClick={() => removeLink(index)}
                         >
-                          <Plus size={16} />
-                          Add Another Link
-                        </AddLinkButton>
-                      )}
-                    </LinkFields>
-                  )}
+                          <Trash2 size={14} />
+                        </RemoveLinkButton>
+                      </LinkItem>
+                    ))}
+
+                    {formData.links.length === 0 && (
+                      <div style={{ 
+                        textAlign: 'center', 
+                        color: '#6b7280', 
+                        fontSize: '14px',
+                        padding: '20px',
+                        border: '1px dashed #d1d5db',
+                        borderRadius: '8px'
+                      }}>
+                        No social links added yet
+                      </div>
+                    )}
+                  </LinksSection>
                 </FormSection>
 
-                <FormActions>
+                <ModalActions>
                   <Button 
                     type="button" 
                     className="secondary"
                     onClick={onClose}
+                    disabled={loading}
                   >
                     Cancel
                   </Button>
@@ -554,9 +534,9 @@ const AddBeneficiaryModal = ({ isOpen, onClose, onBeneficiaryAdded }) => {
                     className="primary"
                     disabled={loading}
                   >
-                    {loading ? 'Adding...' : 'Add Client'}
+                    {loading ? 'Updating...' : 'Update Client'}
                   </Button>
-                </FormActions>
+                </ModalActions>
               </Form>
             </ModalBody>
           </ModalContent>
@@ -566,4 +546,4 @@ const AddBeneficiaryModal = ({ isOpen, onClose, onBeneficiaryAdded }) => {
   );
 };
 
-export default AddBeneficiaryModal;
+export default EditClientModal;
