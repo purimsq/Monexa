@@ -69,19 +69,20 @@ class EmailService {
     /**
      * Send general notification email
      */
-    async sendNotificationEmail(userEmail, userName, subject, message) {
+    async sendNotificationEmail(userEmail, userName, subject, message, replyTo = null) {
         return this._callPythonService('notification', {
             to: userEmail,
             name: userName,
             subject: subject,
-            message: message
+            message: message,
+            replyTo: replyTo
         });
     }
 
     /**
      * Send email with beat attachment
      */
-    async sendBeatEmail(userEmail, userName, subject, message, attachmentData = null) {
+    async sendBeatEmail(userEmail, userName, subject, message, attachmentData = null, replyTo = null) {
         // For large attachments, use a temporary file approach
         if (attachmentData && attachmentData.content && attachmentData.content.length > 10000) {
             return this._callPythonServiceWithTempFile('beat', {
@@ -89,7 +90,8 @@ class EmailService {
                 name: userName,
                 subject: subject,
                 message: message,
-                attachmentData: attachmentData
+                attachmentData: attachmentData,
+                replyTo: replyTo
             });
         } else {
             return this._callPythonService('beat', {
@@ -97,7 +99,8 @@ class EmailService {
                 name: userName,
                 subject: subject,
                 message: message,
-                attachmentData: attachmentData ? JSON.stringify(attachmentData) : null
+                attachmentData: attachmentData ? JSON.stringify(attachmentData) : null,
+                replyTo: replyTo
             });
         }
     }
@@ -171,12 +174,18 @@ The Monexa Team`;
                 case 'notification':
                     pythonArgs.push('--subject', args.subject);
                     pythonArgs.push('--message', args.message);
+                    if (args.replyTo) {
+                        pythonArgs.push('--reply-to', args.replyTo);
+                    }
                     break;
                 case 'beat':
                     pythonArgs.push('--subject', args.subject);
                     pythonArgs.push('--message', args.message);
                     if (args.attachmentData) {
                         pythonArgs.push('--attachment-data', args.attachmentData);
+                    }
+                    if (args.replyTo) {
+                        pythonArgs.push('--reply-to', args.replyTo);
                     }
                     break;
                 case 'transaction':
@@ -252,6 +261,9 @@ The Monexa Team`;
                         pythonArgs.push('--message', args.message);
                         if (tempFile) {
                             pythonArgs.push('--attachment-file', tempFile);
+                        }
+                        if (args.replyTo) {
+                            pythonArgs.push('--reply-to', args.replyTo);
                         }
                         break;
                 }

@@ -56,7 +56,8 @@ router.post('/send', verifyToken, [
                 req.user.name || 'User',
                 subject,
                 body,
-                attachmentData
+                attachmentData,
+                userEmail // Pass user's email as Reply-To
             );
         } else {
             // Send regular notification email
@@ -64,7 +65,8 @@ router.post('/send', verifyToken, [
                 recipient,
                 req.user.name || 'User',
                 subject,
-                body
+                body,
+                userEmail // Pass user's email as Reply-To
             );
         }
 

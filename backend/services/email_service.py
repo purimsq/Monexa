@@ -108,7 +108,7 @@ class EmailService:
             logger.error(f"Failed to send export email: {e}")
             return False
 
-    def send_notification_email(self, to_email, user_name, subject, message_body):
+    def send_notification_email(self, to_email, user_name, subject, message_body, reply_to=None):
         """Send general notification email"""
         try:
             # Create message
@@ -116,6 +116,10 @@ class EmailService:
             message["From"] = f"{self.sender_name} <{self.email_address}>"
             message["To"] = to_email
             message["Subject"] = f"Monexa - {subject}"
+            
+            # Add Reply-To header if provided
+            if reply_to:
+                message["Reply-To"] = reply_to
 
             # Email body
             body = f"""
@@ -206,7 +210,7 @@ class EmailService:
 
         return self.send_notification_email(to_email, user_name, subject, message_body)
 
-    def send_beat_email(self, to_email, user_name, subject, message_body, attachment_data=None):
+    def send_beat_email(self, to_email, user_name, subject, message_body, attachment_data=None, reply_to=None):
         """Send email with beat attachment from Beat Library"""
         try:
             # Create message
@@ -214,6 +218,10 @@ class EmailService:
             message["From"] = f"{self.sender_name} <{self.email_address}>"
             message["To"] = to_email
             message["Subject"] = f"Monexa - {subject}"
+            
+            # Add Reply-To header if provided
+            if reply_to:
+                message["Reply-To"] = reply_to
 
             # Email body
             body = f"""
@@ -287,6 +295,7 @@ def main():
     parser.add_argument('--transaction-data', help='Transaction data as JSON string (for transaction alerts)')
     parser.add_argument('--attachment-data', help='Attachment data as JSON string (for beat emails)')
     parser.add_argument('--attachment-file', help='Attachment data file path (for large beat attachments)')
+    parser.add_argument('--reply-to', help='Reply-To email address (for notification/beat emails)')
 
     args = parser.parse_args()
 
@@ -309,7 +318,7 @@ def main():
                 logger.error("Subject and message are required for notification emails")
                 sys.exit(1)
             success = email_service.send_notification_email(
-                args.to, args.name, args.subject, args.message
+                args.to, args.name, args.subject, args.message, args.reply_to
             )
 
         elif args.type == 'welcome':
@@ -352,7 +361,7 @@ def main():
                     sys.exit(1)
                 
             success = email_service.send_beat_email(
-                args.to, args.name, args.subject, args.message, attachment_data
+                args.to, args.name, args.subject, args.message, attachment_data, args.reply_to
             )
 
         if success:
