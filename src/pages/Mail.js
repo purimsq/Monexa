@@ -874,6 +874,8 @@ const Mail = () => {
   const [beatLibraryDocuments, setBeatLibraryDocuments] = useState([]);
   const [selectedBeatFromLibrary, setSelectedBeatFromLibrary] = useState(null);
   const [beneficiaries, setBeneficiaries] = useState([]);
+  const [emailSuggestion, setEmailSuggestion] = useState(null);
+  const [showEmailSuggestion, setShowEmailSuggestion] = useState(false);
 
 
   // Load email history and beneficiaries on component mount
@@ -893,6 +895,46 @@ const Mail = () => {
     } catch (error) {
       console.error('Error loading beneficiaries:', error);
     }
+  };
+
+  const checkEmailSuggestion = (email) => {
+    if (!email || email.length < 3) {
+      setEmailSuggestion(null);
+      setShowEmailSuggestion(false);
+      return;
+    }
+
+    const matchingClient = beneficiaries.find(client => 
+      client.email && client.email.toLowerCase() === email.toLowerCase()
+    );
+
+    if (matchingClient) {
+      setEmailSuggestion(matchingClient);
+      setShowEmailSuggestion(true);
+    } else {
+      setEmailSuggestion(null);
+      setShowEmailSuggestion(false);
+    }
+  };
+
+  const handleRecipientChange = (email) => {
+    setComposeData(prev => ({ ...prev, recipient: email }));
+    checkEmailSuggestion(email);
+  };
+
+  const handleSelectSuggestedClient = () => {
+    if (emailSuggestion) {
+      setSelectedClient(emailSuggestion);
+      setComposeData(prev => ({ ...prev, recipient: emailSuggestion.email }));
+      setShowEmailSuggestion(false);
+      toast.success(`Selected client: ${emailSuggestion.name}`);
+    }
+  };
+
+  const handleMarkAsDifferent = () => {
+    setShowEmailSuggestion(false);
+    setEmailSuggestion(null);
+    toast.info('Email marked as different person');
   };
 
   const loadBeatLibraryDocuments = async () => {
@@ -960,6 +1002,8 @@ const Mail = () => {
     });
     setSelectedClient(null);
     setSelectedBeatFromLibrary(null);
+    setEmailSuggestion(null);
+    setShowEmailSuggestion(false);
     setShowComposeModal(true);
   };
 
@@ -1278,7 +1322,11 @@ const Mail = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={() => setShowComposeModal(false)}
+                          onClick={() => {
+                  setShowComposeModal(false);
+                  setEmailSuggestion(null);
+                  setShowEmailSuggestion(false);
+                }}
         >
           <Modal
             initial={{ scale: 0.9, opacity: 0 }}
@@ -1288,7 +1336,11 @@ const Mail = () => {
           >
             <ModalHeader>
               <ModalTitle>Compose Email</ModalTitle>
-              <CloseButton onClick={() => setShowComposeModal(false)}>
+              <CloseButton onClick={() => {
+                setShowComposeModal(false);
+                setEmailSuggestion(null);
+                setShowEmailSuggestion(false);
+              }}>
                 <X size={20} />
               </CloseButton>
             </ModalHeader>
@@ -1321,7 +1373,7 @@ const Mail = () => {
                   type="email"
                   placeholder="Enter recipient email address"
                   value={composeData.recipient}
-                  onChange={(e) => setComposeData(prev => ({ ...prev, recipient: e.target.value }))}
+                  onChange={(e) => handleRecipientChange(e.target.value)}
                   style={{ flex: 1 }}
                 />
                 <ClientButton 
@@ -1331,27 +1383,85 @@ const Mail = () => {
                   Choose Client
                 </ClientButton>
               </div>
-                             {selectedClient && (
-                 <div style={{ 
-                   display: 'flex',
-                   alignItems: 'center',
-                   justifyContent: 'space-between',
-                   padding: '8px 12px', 
-                   background: '#f8f9fa', 
-                   border: '1px solid #e9ecef', 
-                   borderRadius: '8px',
-                   fontSize: '14px',
-                   color: '#666666'
-                 }}>
-                   <span>Selected: {selectedClient.name} ({selectedClient.email})</span>
-                   <SmallButton 
-                     className="danger" 
-                     onClick={handleClearClient}
-                   >
-                     Remove
-                   </SmallButton>
-                 </div>
-               )}
+
+              {/* Email Suggestion */}
+              {showEmailSuggestion && emailSuggestion && (
+                <div style={{ 
+                  marginBottom: '12px',
+                  padding: '12px',
+                  background: '#f0f9ff',
+                  border: '1px solid #0ea5e9',
+                  borderRadius: '8px',
+                  fontSize: '14px'
+                }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    marginBottom: '8px'
+                  }}>
+                    <span style={{ fontWeight: '500', color: '#0c4a6e' }}>
+                      💡 This email belongs to your client: <strong>{emailSuggestion.name}</strong>
+                    </span>
+                  </div>
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: '8px',
+                    fontSize: '12px'
+                  }}>
+                    <button
+                      onClick={handleSelectSuggestedClient}
+                      style={{
+                        padding: '6px 12px',
+                        backgroundColor: '#1a1a1a',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '12px'
+                      }}
+                    >
+                      Select as Client
+                    </button>
+                    <button
+                      onClick={handleMarkAsDifferent}
+                      style={{
+                        padding: '6px 12px',
+                        backgroundColor: '#f3f4f6',
+                        color: '#374151',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '12px'
+                      }}
+                    >
+                      Mark as Different Person
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {selectedClient && (
+                <div style={{ 
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 12px', 
+                  background: '#f8f9fa', 
+                  border: '1px solid #e9ecef', 
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  color: '#666666'
+                }}>
+                  <span>Selected: {selectedClient.name} ({selectedClient.email})</span>
+                  <SmallButton 
+                    className="danger" 
+                    onClick={handleClearClient}
+                  >
+                    Remove
+                  </SmallButton>
+                </div>
+              )}
             </FormGroup>
 
             <FormGroup>
@@ -1440,7 +1550,11 @@ const Mail = () => {
             </FormGroup>
 
             <ModalActions>
-              <Button className="secondary" onClick={() => setShowComposeModal(false)}>
+                              <Button className="secondary" onClick={() => {
+                  setShowComposeModal(false);
+                  setEmailSuggestion(null);
+                  setShowEmailSuggestion(false);
+                }}>
                 Cancel
               </Button>
               <Button className="primary" onClick={handleSendEmail} disabled={sending}>
