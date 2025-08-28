@@ -206,17 +206,87 @@ class EmailService:
 
         return self.send_notification_email(to_email, user_name, subject, message_body)
 
+    def send_beat_email(self, to_email, user_name, subject, message_body, attachment_data=None):
+        """Send email with beat attachment from Beat Library"""
+        try:
+            # Create message
+            message = MIMEMultipart()
+            message["From"] = f"{self.sender_name} <{self.email_address}>"
+            message["To"] = to_email
+            message["Subject"] = f"Monexa - {subject}"
+
+            # Email body
+            body = f"""
+            Dear {user_name},
+
+            {message_body}
+
+            Best regards,
+            The Monexa Team
+
+            ---
+            This is an automated email from Monexa.
+            """
+
+            message.attach(MIMEText(body, "plain"))
+
+            # Add attachment if provided
+            if attachment_data:
+                try:
+                    # attachment_data should be a dict with: filename, content (base64), content_type
+                    filename = attachment_data.get('filename', 'beat_attachment')
+                    content = attachment_data.get('content', '')
+                    content_type = attachment_data.get('content_type', 'application/octet-stream')
+                    
+                    # Decode base64 content
+                    import base64
+                    file_content = base64.b64decode(content)
+                    
+                    part = MIMEBase('application', 'octet-stream')
+                    part.set_payload(file_content)
+
+                    encoders.encode_base64(part)
+                    part.add_header(
+                        'Content-Disposition',
+                        f'attachment; filename= {filename}'
+                    )
+                    
+                    message.attach(part)
+                    logger.info(f"Attached file: {filename}")
+                    
+                except Exception as e:
+                    logger.error(f"Failed to attach file: {e}")
+
+            # Send email
+            context = ssl.create_default_context()
+            
+            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+                server.starttls(context=context)
+                server.login(self.email_address, self.email_password)
+                
+                text = message.as_string()
+                server.sendmail(self.email_address, to_email, text)
+                
+            logger.info(f"Beat email sent successfully to {to_email}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to send beat email: {e}")
+            return False
+
 def main():
     """Command line interface for email service"""
     parser = argparse.ArgumentParser(description='Monexa Email Service')
-    parser.add_argument('--type', required=True, choices=['export', 'notification', 'welcome', 'transaction'], help='Email type')
+    parser.add_argument('--type', required=True, choices=['export', 'notification', 'welcome', 'transaction', 'beat'], help='Email type')
     parser.add_argument('--to', required=True, help='Recipient email address')
     parser.add_argument('--name', required=True, help='Recipient name')
-    parser.add_argument('--subject', help='Email subject (for notification type)')
-    parser.add_argument('--message', help='Email message (for notification type)')
+    parser.add_argument('--subject', help='Email subject (for notification/beat type)')
+    parser.add_argument('--message', help='Email message (for notification/beat type)')
     parser.add_argument('--export-type', help='Export type (for export emails)')
     parser.add_argument('--file-path', help='File path for attachment (for export emails)')
     parser.add_argument('--transaction-data', help='Transaction data as JSON string (for transaction alerts)')
+    parser.add_argument('--attachment-data', help='Attachment data as JSON string (for beat emails)')
+    parser.add_argument('--attachment-file', help='Attachment data file path (for large beat attachments)')
 
     args = parser.parse_args()
 
@@ -258,6 +328,31 @@ def main():
                 
             success = email_service.send_transaction_alert(
                 args.to, args.name, transaction_details
+            )
+
+        elif args.type == 'beat':
+            if not args.subject or not args.message:
+                logger.error("Subject and message are required for beat emails")
+                sys.exit(1)
+            
+            attachment_data = None
+            if args.attachment_file:
+                try:
+                    with open(args.attachment_file, 'r') as f:
+                        attachment_data = json.load(f)
+                    logger.info(f"Loaded attachment data from file: {args.attachment_file}")
+                except (json.JSONDecodeError, FileNotFoundError) as e:
+                    logger.error(f"Failed to load attachment data from file: {e}")
+                    sys.exit(1)
+            elif args.attachment_data:
+                try:
+                    attachment_data = json.loads(args.attachment_data)
+                except json.JSONDecodeError:
+                    logger.error("Invalid JSON in attachment data")
+                    sys.exit(1)
+                
+            success = email_service.send_beat_email(
+                args.to, args.name, args.subject, args.message, attachment_data
             )
 
         if success:

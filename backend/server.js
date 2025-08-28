@@ -19,6 +19,7 @@ const notificationRoutes = require('./routes/notifications');
 const exportRoutes = require('./routes/exports');
 const securityRoutes = require('./routes/security');
 const paypalRoutes = require('./routes/paypal');
+const emailRoutes = require('./routes/email');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -61,8 +62,8 @@ app.use(cors({
 }));
 
 // Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Serve static files (uploads)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -115,6 +116,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/exports', exportRoutes);
 app.use('/api/security', securityRoutes);
 app.use('/api/paypal', paypalRoutes);
+app.use('/api/email', emailRoutes);
 
 // 404 handler
 app.use('/api/*', (req, res) => {

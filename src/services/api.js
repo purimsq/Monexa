@@ -533,6 +533,19 @@ class ApiService {
     async getPayPalStatus() {
         return this.get('/paypal/status');
     }
+
+    // Email Methods
+    async sendEmail(emailData) {
+        return this.post('/email/send', emailData);
+    }
+
+    async getEmailHistory(limit = 50, offset = 0) {
+        return this.get(`/email/history?limit=${limit}&offset=${offset}`);
+    }
+
+    async deleteEmail(emailId) {
+        return this.delete(`/email/${emailId}`);
+    }
 }
 
 // Create singleton instance

@@ -79,6 +79,30 @@ class EmailService {
     }
 
     /**
+     * Send email with beat attachment
+     */
+    async sendBeatEmail(userEmail, userName, subject, message, attachmentData = null) {
+        // For large attachments, use a temporary file approach
+        if (attachmentData && attachmentData.content && attachmentData.content.length > 10000) {
+            return this._callPythonServiceWithTempFile('beat', {
+                to: userEmail,
+                name: userName,
+                subject: subject,
+                message: message,
+                attachmentData: attachmentData
+            });
+        } else {
+            return this._callPythonService('beat', {
+                to: userEmail,
+                name: userName,
+                subject: subject,
+                message: message,
+                attachmentData: attachmentData ? JSON.stringify(attachmentData) : null
+            });
+        }
+    }
+
+    /**
      * Send password reset email
      */
     async sendPasswordResetEmail(userEmail, userName, resetToken) {
@@ -148,6 +172,13 @@ The Monexa Team`;
                     pythonArgs.push('--subject', args.subject);
                     pythonArgs.push('--message', args.message);
                     break;
+                case 'beat':
+                    pythonArgs.push('--subject', args.subject);
+                    pythonArgs.push('--message', args.message);
+                    if (args.attachmentData) {
+                        pythonArgs.push('--attachment-data', args.attachmentData);
+                    }
+                    break;
                 case 'transaction':
                     pythonArgs.push('--transaction-data', args.transactionData);
                     break;
@@ -186,6 +217,110 @@ The Monexa Team`;
                 console.error(`Python process error (${type}):`, error);
                 resolve(false);
             });
+        });
+    }
+
+    /**
+     * Call Python service with temporary file for large attachments
+     */
+    async _callPythonServiceWithTempFile(type, args) {
+        const fs = require('fs');
+        const path = require('path');
+        const os = require('os');
+
+        return new Promise(async (resolve, reject) => {
+            let tempFile = null;
+            
+            try {
+                // Create temporary file for attachment data
+                if (args.attachmentData) {
+                    tempFile = path.join(os.tmpdir(), `monexa_attachment_${Date.now()}.json`);
+                    fs.writeFileSync(tempFile, JSON.stringify(args.attachmentData));
+                }
+
+                const pythonArgs = [
+                    this.pythonScript,
+                    '--type', type,
+                    '--to', args.to,
+                    '--name', args.name
+                ];
+
+                // Add type-specific arguments
+                switch (type) {
+                    case 'beat':
+                        pythonArgs.push('--subject', args.subject);
+                        pythonArgs.push('--message', args.message);
+                        if (tempFile) {
+                            pythonArgs.push('--attachment-file', tempFile);
+                        }
+                        break;
+                }
+
+                const pythonProcess = spawn('python', pythonArgs, {
+                    env: { ...process.env }
+                });
+
+                let output = '';
+                let errorOutput = '';
+
+                pythonProcess.stdout.on('data', (data) => {
+                    output += data.toString();
+                });
+
+                pythonProcess.stderr.on('data', (data) => {
+                    errorOutput += data.toString();
+                });
+
+                pythonProcess.on('close', (code) => {
+                    // Clean up temporary file
+                    if (tempFile && fs.existsSync(tempFile)) {
+                        try {
+                            fs.unlinkSync(tempFile);
+                        } catch (err) {
+                            console.warn('Failed to clean up temp file:', err);
+                        }
+                    }
+
+                    console.log(`Python process exited with code: ${code}`);
+                    console.log(`Python stdout: ${output.trim()}`);
+                    console.log(`Python stderr: ${errorOutput.trim()}`);
+                    
+                    if (code === 0) {
+                        console.log(`Email sent successfully (${type}):`, output.trim());
+                        resolve(true);
+                    } else {
+                        console.error(`Failed to send email (${type}):`, errorOutput.trim());
+                        resolve(false);
+                    }
+                });
+
+                pythonProcess.on('error', (error) => {
+                    // Clean up temporary file on error
+                    if (tempFile && fs.existsSync(tempFile)) {
+                        try {
+                            fs.unlinkSync(tempFile);
+                        } catch (err) {
+                            console.warn('Failed to clean up temp file:', err);
+                        }
+                    }
+
+                    console.error(`Python process error (${type}):`, error);
+                    resolve(false);
+                });
+
+            } catch (error) {
+                // Clean up temporary file on error
+                if (tempFile && fs.existsSync(tempFile)) {
+                    try {
+                        fs.unlinkSync(tempFile);
+                    } catch (err) {
+                        console.warn('Failed to clean up temp file:', err);
+                    }
+                }
+
+                console.error(`Error in _callPythonServiceWithTempFile (${type}):`, error);
+                resolve(false);
+            }
         });
     }
 
