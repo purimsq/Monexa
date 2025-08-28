@@ -1026,7 +1026,8 @@ const Mail = () => {
         recipient: composeData.recipient,
         subject: composeData.subject,
         body: composeData.body,
-        template: selectedTemplate
+        template: selectedTemplate,
+        clientId: selectedClient ? selectedClient.id : null
       };
 
       // Add attachments if present

@@ -553,6 +553,11 @@ class ApiService {
         return this.get(`/email/history?limit=${limit}&offset=${offset}`);
     }
 
+    // Get sent beats for a specific client
+    async getClientBeats(clientId) {
+        return this.get(`/email/client-beats/${clientId}`);
+    }
+
     async deleteEmail(emailId) {
         return this.delete(`/email/${emailId}`);
     }

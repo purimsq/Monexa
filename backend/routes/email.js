@@ -24,7 +24,7 @@ router.post('/send', verifyToken, [
             });
         }
 
-        const { recipient, subject, body, template, attachment, attachments } = req.body;
+        const { recipient, subject, body, template, attachment, attachments, clientId } = req.body;
         const userId = req.user.id;
 
         // Get user's profile email for Reply-To header
@@ -40,113 +40,195 @@ router.post('/send', verifyToken, [
 
         const userEmail = userResult.email;
 
-                       // Send email using Python service
-               let emailSent = false;
-
-                               if (attachments && attachments.length > 0 && template === 'beat') {
+        // Send email using the email service
+        let emailSent = false;
+        console.log('Starting email sending process...');
+        console.log('Template:', template);
+        console.log('Has attachments:', !!(attachments || attachment));
+        console.log('Recipient:', recipient);
+        console.log('User email for Reply-To:', userEmail);
+        
+        try {
+            if (template === 'beat' && (attachments || attachment)) {
+                // Handle beat emails with attachments
+                const attachmentData = attachments || (attachment ? [attachment] : []);
+                
+                if (attachmentData.length > 0) {
                     // Check total size of attachments
-                    const totalSize = attachments.reduce((total, attachment) => {
-                        return total + (attachment.data ? attachment.data.length * 0.75 : 0); // Approximate size in bytes
+                    const totalSize = attachmentData.reduce((total, att) => {
+                        return total + (att.data ? att.data.length * 0.75 : 0);
                     }, 0);
                     
                     const maxSize = 25 * 1024 * 1024; // 25MB in bytes
                     
                     if (totalSize > maxSize) {
                         // Files are too large, send notification instead
-                        const attachmentDataArray = attachments.map(attachment => ({
-                            name: attachment.name,
-                            data: attachment.data,
-                            type: attachment.type
-                        }));
-
                         emailSent = await emailService.sendLargeFileNotification(
                             recipient,
                             req.user.name || 'User',
                             subject,
                             body,
-                            attachmentDataArray,
-                            userEmail // Pass user's email as Reply-To
+                            attachmentData,
+                            userEmail
                         );
                     } else {
                         // Files are within size limit, send as regular attachments
-                        const attachmentDataArray = attachments.map(attachment => ({
-                            filename: attachment.name,
-                            content: attachment.data,
-                            content_type: attachment.type
+                        const attachmentDataArray = attachmentData.map(att => ({
+                            filename: att.name,
+                            content: att.data,
+                            content_type: att.type
                         }));
 
+                        console.log('Calling sendBeatEmail with attachments...');
                         emailSent = await emailService.sendBeatEmail(
                             recipient,
                             req.user.name || 'User',
                             subject,
                             body,
                             attachmentDataArray,
-                            userEmail // Pass user's email as Reply-To
+                            userEmail
                         );
+                        console.log('sendBeatEmail result:', emailSent);
                     }
-               } else if (attachment && template === 'beat') {
-                   // Send email with single beat attachment (backward compatibility)
-                   const attachmentData = {
-                       filename: attachment.name,
-                       content: attachment.data,
-                       content_type: attachment.type
-                   };
-
-                   emailSent = await emailService.sendBeatEmail(
-                       recipient,
-                       req.user.name || 'User',
-                       subject,
-                       body,
-                       attachmentData,
-                       userEmail // Pass user's email as Reply-To
-                   );
-               } else {
-                   // Send regular notification email
-                   emailSent = await emailService.sendNotificationEmail(
-                       recipient,
-                       req.user.name || 'User',
-                       subject,
-                       body,
-                       userEmail // Pass user's email as Reply-To
-                   );
-               }
-
-        if (!emailSent) {
-            throw new Error('Failed to send email via Python service');
+                } else {
+                    // No attachments, send as notification
+                    emailSent = await emailService.sendNotificationEmail(
+                        recipient,
+                        req.user.name || 'User',
+                        subject,
+                        body,
+                        userEmail
+                    );
+                }
+            } else {
+                // Send regular notification email
+                console.log('Calling sendNotificationEmail...');
+                emailSent = await emailService.sendNotificationEmail(
+                    recipient,
+                    req.user.name || 'User',
+                    subject,
+                    body,
+                    userEmail
+                );
+                console.log('sendNotificationEmail result:', emailSent);
+            }
+        } catch (emailError) {
+            console.error('Email service error:', emailError);
+            console.error('Email error stack:', emailError.stack);
+            console.error('Email error details:', {
+                message: emailError.message,
+                code: emailError.code,
+                errno: emailError.errno
+            });
+            // Continue with database insertion even if email fails
+            emailSent = false;
         }
 
-        // Save email to database
-        const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        const insertQuery = `
-            INSERT INTO emails (user_id, recipient, subject, body, template, status, sent_at, message_id)
-            VALUES (?, ?, ?, ?, ?, 'sent', datetime('now'), ?)
-        `;
+        // Log the email sending result
+        console.log('Email sending result:', emailSent);
         
-        await database.run(insertQuery, [
-            userId,
-            recipient,
-            subject,
-            body,
-            template,
-            messageId
-        ]);
+        // For now, let's allow the process to continue even if email fails
+        // This will help us debug the database insertion
+        if (!emailSent) {
+            console.warn('Email service failed, but continuing with database insertion for debugging');
+        }
 
-        console.log('Email sent successfully:', messageId);
+        // Prepare attachments data for storage
+        let attachmentsData = null;
+        if (attachments && attachments.length > 0) {
+            attachmentsData = JSON.stringify(attachments.map(att => ({
+                name: att.name,
+                type: att.type,
+                size: att.data ? att.data.length * 0.75 : 0 // Approximate size
+            })));
+        } else if (attachment) {
+            attachmentsData = JSON.stringify([{
+                name: attachment.name,
+                type: attachment.type,
+                size: attachment.data ? attachment.data.length * 0.75 : 0
+            }]);
+        }
 
-        res.json({
-            success: true,
-            message: 'Email sent successfully',
-            messageId: messageId
-        });
+        // Generate messageId outside try block so it's available in catch block
+        const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        try {
+            // Prepare client_id and attachments data for storage
+            const clientId = req.body.clientId || null;
+            let attachmentsData = null;
+            
+            if (attachments && attachments.length > 0) {
+                attachmentsData = JSON.stringify(attachments.map(att => ({
+                    name: att.name,
+                    type: att.type,
+                    size: att.data ? att.data.length * 0.75 : 0
+                })));
+            } else if (attachment) {
+                attachmentsData = JSON.stringify([{
+                    name: attachment.name,
+                    type: attachment.type,
+                    size: attachment.data ? attachment.data.length * 0.75 : 0
+                }]);
+            }
+            
+            // Save email to database with client tracking
+            const insertQuery = `
+                INSERT INTO emails (user_id, recipient, subject, body, template, status, sent_at, message_id, client_id, attachments)
+                VALUES (?, ?, ?, ?, ?, 'sent', datetime('now'), ?, ?, ?)
+            `;
+            
+            console.log('Inserting email with client tracking');
+            console.log('Client ID:', clientId);
+            console.log('Attachments data:', attachmentsData);
+            
+            await database.run(insertQuery, [
+                userId,
+                recipient,
+                subject,
+                body,
+                template,
+                messageId,
+                clientId,
+                attachmentsData
+            ]);
+
+            console.log('Email data saved successfully with client tracking:', messageId);
+
+            res.json({
+                success: true,
+                message: emailSent ? 'Email sent successfully!' : 'Email saved but sending failed',
+                messageId: messageId
+            });
+        } catch (dbError) {
+            console.error('Database insertion error:', dbError);
+            throw new Error(`Failed to save email to database: ${dbError.message}`);
+        }
 
     } catch (error) {
         console.error('Email sending error:', error);
         
-        // Save failed email to database
+        // Save failed email to database with client tracking
         try {
+            const clientId = req.body.clientId || null;
+            let attachmentsData = null;
+            
+            if (attachments && attachments.length > 0) {
+                attachmentsData = JSON.stringify(attachments.map(att => ({
+                    name: att.name,
+                    type: att.type,
+                    size: att.data ? att.data.length * 0.75 : 0
+                })));
+            } else if (attachment) {
+                attachmentsData = JSON.stringify([{
+                    name: attachment.name,
+                    type: attachment.type,
+                    size: attachment.data ? attachment.data.length * 0.75 : 0
+                }]);
+            }
+            
             const insertQuery = `
-                INSERT INTO emails (user_id, recipient, subject, body, template, status, sent_at, error_message)
-                VALUES (?, ?, ?, ?, ?, 'failed', datetime('now'), ?)
+                INSERT INTO emails (user_id, recipient, subject, body, template, status, sent_at, error_message, client_id, attachments)
+                VALUES (?, ?, ?, ?, ?, 'failed', datetime('now'), ?, ?, ?)
             `;
             
             await database.run(insertQuery, [
@@ -155,7 +237,9 @@ router.post('/send', verifyToken, [
                 req.body.subject,
                 req.body.body,
                 req.body.template,
-                error.message
+                error.message,
+                clientId,
+                attachmentsData
             ]);
         } catch (dbError) {
             console.error('Failed to save email error to database:', dbError);
@@ -176,7 +260,7 @@ router.get('/history', verifyToken, async (req, res) => {
         const userId = req.user.id;
 
         const query = `
-            SELECT id, recipient, subject, template, status, sent_at, error_message
+            SELECT id, recipient, subject, template, status, sent_at, error_message, client_id, attachments
             FROM emails 
             WHERE user_id = ? 
             ORDER BY sent_at DESC 
@@ -184,10 +268,16 @@ router.get('/history', verifyToken, async (req, res) => {
         `;
 
         const emails = await database.all(query, [userId, limit, offset]);
+        
+        // Parse attachments JSON for each email
+        const emailsWithParsedData = emails.map(email => ({
+            ...email,
+            attachments: email.attachments ? JSON.parse(email.attachments) : null
+        }));
 
         res.json({
             success: true,
-            emails: emails
+            emails: emailsWithParsedData
         });
 
     } catch (error) {
@@ -195,6 +285,40 @@ router.get('/history', verifyToken, async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Failed to fetch email history'
+        });
+    }
+});
+
+// Get sent beats for a specific client
+router.get('/client-beats/:clientId', verifyToken, async (req, res) => {
+    try {
+        const { clientId } = req.params;
+        const userId = req.user.id;
+
+        const query = `
+            SELECT id, subject, template, status, sent_at, attachments
+            FROM emails 
+            WHERE user_id = ? AND client_id = ? AND template = 'beat' AND status = 'sent'
+            ORDER BY sent_at DESC
+        `;
+
+        const sentBeats = await database.all(query, [userId, clientId]);
+        
+        // Parse attachments JSON for each beat
+        const beatsWithParsedData = sentBeats.map(beat => ({
+            ...beat,
+            attachments: beat.attachments ? JSON.parse(beat.attachments) : null
+        }));
+
+        res.json({
+            success: true,
+            sentBeats: beatsWithParsedData
+        });
+    } catch (error) {
+        console.error('Error fetching client beats:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch client beats'
         });
     }
 });

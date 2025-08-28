@@ -33,9 +33,17 @@ class EmailService:
         self.email_password = os.getenv('EMAIL_PASSWORD', 'your_app_password')
         self.sender_name = 'Monexa'
         
+        # Debug: Log configuration (without password)
+        logger.info(f"Email service initialized:")
+        logger.info(f"  SMTP Server: {self.smtp_server}")
+        logger.info(f"  SMTP Port: {self.smtp_port}")
+        logger.info(f"  Email Address: {self.email_address}")
+        logger.info(f"  Email Password: {'*' * len(self.email_password) if self.email_password != 'your_app_password' else 'NOT SET'}")
+        
         # Validate configuration
         if self.email_address == 'your_email@gmail.com':
-            logger.warning("Email service not configured. Please set EMAIL_ADDRESS and EMAIL_PASSWORD environment variables.")
+            logger.error("Email service not configured. Please set EMAIL_ADDRESS and EMAIL_PASSWORD environment variables.")
+            raise ValueError("Email credentials not configured")
 
     def send_export_email(self, to_email, user_name, export_type, file_path=None):
         """Send export completion email"""
@@ -212,16 +220,20 @@ class EmailService:
 
     def send_beat_email(self, to_email, user_name, subject, message_body, attachment_data=None, reply_to=None):
         """Send email with beat attachment(s) from Beat Library"""
+        logger.info(f"send_beat_email called with: to={to_email}, subject={subject}, attachments={len(attachment_data) if attachment_data else 0}")
         try:
             # Create message
+            logger.info("Creating email message...")
             message = MIMEMultipart()
             message["From"] = f"{self.sender_name} <{self.email_address}>"
             message["To"] = to_email
             message["Subject"] = f"Monexa - {subject}"
+            logger.info(f"Email headers set: From={self.sender_name} <{self.email_address}>, To={to_email}, Subject=Monexa - {subject}")
             
             # Add Reply-To header if provided
             if reply_to:
                 message["Reply-To"] = reply_to
+                logger.info(f"Reply-To header set: {reply_to}")
 
             # Email body
             body = f"""
@@ -237,12 +249,38 @@ class EmailService:
             """
 
             message.attach(MIMEText(body, "plain"))
+            logger.info("Email body attached")
 
             # Handle multiple attachments
+            logger.info(f"Processing attachments: {attachment_data is not None}")
             if attachment_data:
                 # Check if it's a list of attachments or a single attachment
+                logger.info(f"Attachment data type: {type(attachment_data)}")
+                
+                # Check total attachment size before processing
+                total_size = 0
+                if isinstance(attachment_data, list):
+                    for attachment in attachment_data:
+                        content = attachment.get('content', '')
+                        if content:
+                            # Base64 content is about 33% larger than original
+                            total_size += len(content) * 0.75
+                else:
+                    content = attachment_data.get('content', '')
+                    if content:
+                        total_size += len(content) * 0.75
+                
+                logger.info(f"Total attachment size: {total_size / 1024 / 1024:.2f} MB")
+                
+                # Gmail limit is ~25MB, but we'll be conservative at 15MB for attachments
+                max_attachment_size = 15 * 1024 * 1024  # 15MB
+                if total_size > max_attachment_size:
+                    logger.error(f"Attachments too large: {total_size / 1024 / 1024:.2f} MB exceeds {max_attachment_size / 1024 / 1024:.2f} MB limit")
+                    return False
+                
                 if isinstance(attachment_data, list):
                     # Multiple attachments
+                    logger.info(f"Processing {len(attachment_data)} attachments")
                     for attachment in attachment_data:
                         try:
                             filename = attachment.get('filename', 'beat_attachment')
@@ -294,17 +332,52 @@ class EmailService:
                         logger.error(f"Failed to attach file: {e}")
 
             # Send email
+            logger.info(f"Attempting to connect to SMTP server: {self.smtp_server}:{self.smtp_port}")
             context = ssl.create_default_context()
             
-            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
-                server.starttls(context=context)
-                server.login(self.email_address, self.email_password)
-                
-                text = message.as_string()
-                server.sendmail(self.email_address, to_email, text)
-                
-            logger.info(f"Beat email sent successfully to {to_email}")
-            return True
+            try:
+                with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+                    logger.info("SMTP connection established")
+                    server.starttls(context=context)
+                    logger.info("TLS started")
+                    server.login(self.email_address, self.email_password)
+                    logger.info("SMTP login successful")
+                    
+                    text = message.as_string()
+                    email_size = len(text)
+                    logger.info(f"Preparing to send email from {self.email_address} to {to_email}")
+                    logger.info(f"Email content length: {email_size} characters ({email_size / 1024 / 1024:.2f} MB)")
+                    
+                    # Check if email is too large (Gmail limit is ~25MB)
+                    max_size = 20 * 1024 * 1024  # 20MB to be safe
+                    if email_size > max_size:
+                        logger.error(f"Email too large: {email_size / 1024 / 1024:.2f} MB exceeds {max_size / 1024 / 1024:.2f} MB limit")
+                        return False
+                    
+                    try:
+                        server.sendmail(self.email_address, to_email, text)
+                        logger.info("Email sent via SMTP successfully")
+                    except smtplib.SMTPRecipientsRefused as e:
+                        logger.error(f"SMTP Recipients Refused: {e}")
+                        return False
+                    except smtplib.SMTPDataError as e:
+                        logger.error(f"SMTP Data Error: {e}")
+                        return False
+                    except Exception as e:
+                        logger.error(f"Error during sendmail: {e}")
+                        return False
+                    
+                logger.info(f"Beat email sent successfully to {to_email}")
+                return True
+            except smtplib.SMTPAuthenticationError as e:
+                logger.error(f"SMTP Authentication failed: {e}")
+                return False
+            except smtplib.SMTPException as e:
+                logger.error(f"SMTP error: {e}")
+                return False
+            except Exception as e:
+                logger.error(f"Unexpected error during SMTP: {e}")
+                return False
 
         except Exception as e:
             logger.error(f"Failed to send beat email: {e}")

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Users, Mail, Music, CreditCard, Link, ExternalLink, Edit, Trash2 } from 'lucide-react';
+import { X, Users, Mail, Music, CreditCard, Link, ExternalLink, Edit, Trash2, FileText, Calendar } from 'lucide-react';
 import { toast } from 'react-toastify';
+import apiService from '../services/api';
 
 const ModalOverlay = styled(motion.div)`
   position: fixed;
@@ -245,6 +246,72 @@ const Button = styled.button`
   }
 `;
 
+const BeatCard = styled.div`
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #f1f3f4;
+    border-color: #d1d5db;
+  }
+`;
+
+const BeatHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+`;
+
+const BeatTitle = styled.h5`
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  flex: 1;
+`;
+
+const BeatDate = styled.span`
+  font-size: 12px;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+const BeatAttachments = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
+const AttachmentTag = styled.span`
+  background: #e5e7eb;
+  color: #374151;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 32px 16px;
+  color: #6b7280;
+`;
+
+const LoadingState = styled.div`
+  text-align: center;
+  padding: 32px 16px;
+  color: #6b7280;
+`;
+
 const ClientDetailsModal = ({ 
   isOpen, 
   onClose, 
@@ -252,10 +319,46 @@ const ClientDetailsModal = ({
   onEdit, 
   onDelete 
 }) => {
+  const [sentBeats, setSentBeats] = useState([]);
+  const [loadingBeats, setLoadingBeats] = useState(false);
+
+  // Fetch sent beats when client changes
+  useEffect(() => {
+    if (client && isOpen) {
+      loadSentBeats();
+    }
+  }, [client, isOpen]);
+
+  const loadSentBeats = async () => {
+    if (!client) return;
+    
+    try {
+      setLoadingBeats(true);
+      const response = await apiService.getClientBeats(client.id);
+      if (response.success) {
+        setSentBeats(response.sentBeats || []);
+      } else {
+        console.error('Failed to load sent beats:', response.error);
+      }
+    } catch (error) {
+      console.error('Error loading sent beats:', error);
+    } finally {
+      setLoadingBeats(false);
+    }
+  };
+
   const handleLinkClick = (url) => {
     if (url) {
       window.open(url, '_blank', 'noopener,noreferrer');
     }
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   if (!client) return null;
@@ -368,6 +471,51 @@ const ClientDetailsModal = ({
                   </LinksGrid>
                 </Section>
               )}
+
+              {/* Sent Beats */}
+              <Section>
+                <SectionTitle>
+                  <Music size={18} />
+                  Sent Beats
+                </SectionTitle>
+                
+                {loadingBeats ? (
+                  <LoadingState>
+                    <Music size={24} style={{ marginBottom: '8px', opacity: 0.5 }} />
+                    <p>Loading sent beats...</p>
+                  </LoadingState>
+                ) : sentBeats.length === 0 ? (
+                  <EmptyState>
+                    <Music size={24} style={{ marginBottom: '8px', opacity: 0.5 }} />
+                    <p>No beats sent to this client yet</p>
+                    <p style={{ fontSize: '12px', marginTop: '4px' }}>
+                      Send beats via the Mail page to see them here
+                    </p>
+                  </EmptyState>
+                ) : (
+                  <div>
+                    {sentBeats.map((beat, index) => (
+                      <BeatCard key={index}>
+                        <BeatHeader>
+                          <BeatTitle>{beat.subject}</BeatTitle>
+                          <BeatDate>
+                            <Calendar size={12} />
+                            {formatDate(beat.sent_at)}
+                          </BeatDate>
+                        </BeatHeader>
+                        <BeatAttachments>
+                          {beat.attachments && beat.attachments.map((attachment, attIndex) => (
+                            <AttachmentTag key={attIndex}>
+                              <FileText size={12} />
+                              {attachment.name}
+                            </AttachmentTag>
+                          ))}
+                        </BeatAttachments>
+                      </BeatCard>
+                    ))}
+                  </div>
+                )}
+              </Section>
 
               <ModalActions>
                 <Button 
